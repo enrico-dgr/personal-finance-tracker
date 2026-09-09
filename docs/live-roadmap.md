@@ -1,6 +1,8 @@
 # Live Roadmap
 
 ## NOW
+- Verificare in browser reale le schermate dopo lo split di `App.tsx`, in particolare regole e modale di correzione multi-riga.
+- Valutare le 13 vulnerabilità riportate da `npm audit` (1 critical) e decidere quali aggiornamenti sono sicuri.
 - Validare parser e mapping su altri export reali Mediolanum o su mesi diversi dello stesso conto.
 - Raffinare categorie e dizionario merchant italiani per supermercati, telco, utenze, carburante, fee, prelievi ed entrate.
 - Rendere visibili in UI gli esiti dell'import con maggior dettaglio: nuovi, aggiornati, eventuali righe problematiche.
@@ -10,6 +12,8 @@
 - Valutare un toggle chiaro tra barre mensili e linea cumulativa per la spesa selezionata, se serve una lettura più finanziaria del trend.
 
 ## NEXT
+- Droppare la tabella `Transaction` alla prossima migrazione Prisma pianificata, se resta inutilizzata (ADR-0003).
+- Rientrare sui 7 warning ESLint residui su effetti React, valutando caso per caso il rischio di regressione.
 - Aggiungere metriche di match per regola e storico degli override default più usati.
 - Introdurre preview dell'import prima del salvataggio definitivo.
 - Gestire duplicati in modo esplicito con vista differenze e motivazione del merge.

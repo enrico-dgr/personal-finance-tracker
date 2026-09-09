@@ -38,3 +38,24 @@ Trigger di revisione:
 - necessità futura di sincronizzare anche lo storico tra dispositivi
 - richiesta di analisi longitudinali persistenti mese su mese
 - esigenza di multiutente o accesso condiviso più robusto
+
+## ADR-0003 - Chiusura degli endpoint legacy sui movimenti
+Data: 2026-09-09
+
+Contesto:
+- dopo ADR-0002 il backend continuava a esporre `GET /api/transactions`, `GET /api/stats` e `PATCH /api/transactions/:id` come stub vuoti mai chiamati dal frontend
+- `DELETE /api/transactions` eseguiva un `deleteMany()` globale senza autenticazione, pur agendo su una tabella che non viene mai popolata
+- il "reset storico" percepito dall'utente avviene già interamente nello stato del browser
+
+Decisione:
+- rimuovere i quattro endpoint dal backend e la chiamata di reset dal client HTTP
+- mantenere per ora il modello Prisma `Transaction` nello schema, marcato come deprecato, per non forzare una migrazione distruttiva su un `dev.db` locale esistente
+
+Motivazione:
+- eliminare una superficie di scrittura distruttiva e non autenticata
+- evitare che i contratti API descrivano funzionalità che non esistono più
+- separare la pulizia del codice, reversibile, dalla rimozione dei dati, che non lo è
+
+Trigger di revisione:
+- alla prossima migrazione Prisma pianificata, droppare la tabella `Transaction` se nel frattempo non è servita
+- se torna il bisogno di uno storico persistente, la tabella va ridisegnata insieme all'utente proprietario invece di riusare quella attuale

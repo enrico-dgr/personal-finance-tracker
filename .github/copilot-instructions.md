@@ -3,16 +3,21 @@
 Queste istruzioni sono pensate per essere copiate in repository diversi senza portarsi dietro dettagli hardcoded di un singolo prodotto.
 
 ## Project Profile
-- Profile status: TEMPLATE
-- Project name: TO_DEFINE
-- One-line product purpose: TO_DEFINE
-- Primary stakeholder or audience: TO_DEFINE
-- Preferred language for user-facing updates: TO_DEFINE_OR_INFER_FROM_USER
-- Communication style: TO_DEFINE_OR_INFER_FROM_USER
-- Source-of-truth docs or folders: TO_DEFINE_OR_DISCOVER
-- Approved stack or mandatory constraints: TO_DEFINE_OR_DISCOVER
-- Security or compliance non-negotiables: TO_DEFINE_OR_DISCOVER
-- Deployment model and environments: TO_DEFINE_OR_DISCOVER
+- Profile status: INITIALIZED
+- Project name: Personal Finance Tracker
+- One-line product purpose: trasformare gli export CSV di banche italiane (Mediolanum in primis) in merchant puliti, categorie affidabili e insight di spesa e risparmio.
+- Primary stakeholder or audience: il proprietario del progetto, che lo usa sui propri estratti conto personali.
+- Preferred language for user-facing updates: italiano.
+- Communication style: conciso e concreto, orientato a decisioni e impatto; niente gergo superfluo.
+- Source-of-truth docs or folders: `docs/` (`vision.md`, `requirements.md`, `architecture.md`, `architecture-implementation.md`, `flows.md`, `api-contracts.md`, `system-components.md`, `mvp-plan.md`, `live-roadmap.md`, `decisions.md`, `team-ops.md`) e `readme.md` per lo stato e il setup.
+- Approved stack or mandatory constraints: monorepo npm workspaces su Node >= 22; React 19 + TypeScript + Vite (`apps/web`); Express 5 + TypeScript (`apps/api`); Prisma + SQLite (`prisma/`); Vitest per i test; classificazione deterministica con priorità `merchant rule > keyword > fallback`, mai AI come primo livello.
+- Security or compliance non-negotiables: nessun dato bancario reale in git (solo fixture anonime `examples/sample-*.csv`); `.env` e `prisma/dev.db` restano non versionati; `AUTH_SECRET` obbligatorio e mai hardcoded nel sorgente; nessun endpoint distruttivo non autenticato; lo storico movimenti resta in sessione, si sincronizzano solo le regole (ADR-0002).
+- Deployment model and environments: solo esecuzione locale (`npm run dev`, API su 3001 e web su 5173 con proxy `/api`). Nessun ambiente remoto o pipeline di deploy; la CI GitHub Actions esegue soltanto lint, build e test.
+
+## Working Conventions
+- Lingua: codice, commenti, nomi e commit message in inglese; risposte allo stakeholder in italiano.
+- Verifica minima prima di considerare chiuso un task: `npm run lint`, `npm run build`, `npm test`.
+- Le modifiche agli endpoint vanno riflesse in `docs/api-contracts.md`; le scelte strutturali in `docs/decisions.md` come nuovo ADR.
 
 ## Bootstrap Rule For New Repositories
 Se il profilo sopra e ancora in stato `TEMPLATE` oppure contiene campi `TO_DEFINE`, non assumere dettagli di progetto.

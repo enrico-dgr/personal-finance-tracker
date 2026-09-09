@@ -1,5 +1,10 @@
 # API Contracts
 
+Note trasversali:
+- CORS: solo le origin elencate in `CORS_ORIGINS` ricevono gli header CORS (default `http://localhost:5173`).
+- Rate limiting: signup e login accettano al massimo 20 richieste ogni 15 minuti per IP, poi rispondono `429`.
+- I movimenti non sono persistiti: vivono nella sessione del browser. Non esiste alcun endpoint di lettura, modifica o cancellazione dello storico (ADR-0002, ADR-0003).
+
 ## GET /api/health
 Risposta:
 - `status`
@@ -48,18 +53,9 @@ Header opzionale:
 Risposta:
 - `rules: MerchantRule[]`
 
-## GET /api/transactions
+## GET /api/rules/defaults
 Risposta:
-- `transactions: Transaction[]`
-
-## GET /api/stats
-Risposta:
-- `overview.totalTransactions`
-- `overview.currentMonthSpend`
-- `overview.ruleCount`
-- `overview.referenceMonth`
-- `monthlySpend[]`
-- `categorySpend[]`
+- `rules: MerchantRule[]` con le regole di default esposte dal backend
 
 ## POST /api/upload
 Content-Type:
@@ -75,9 +71,7 @@ Risposta:
 - `updatedCount`
 - `transactions[]`
 
-## DELETE /api/transactions
-Risposta:
-- `deletedCount`
+Nota: l'upload e stateless. I movimenti classificati tornano nella risposta e non vengono salvati.
 
 ## POST /api/rules
 Body:
@@ -85,6 +79,9 @@ Body:
 - `patternType?: contains | regex`
 - `normalizedName: string`
 - `category: string`
+- `priority?: number`
+- `isDisabled?: boolean`
+- `id?` oppure `defaultRuleId?` per aggiornare una regola esistente
 
 Header richiesto:
 - `Authorization: Bearer <token>`

@@ -14,11 +14,24 @@ First working MVP slice is now in the repository:
 * Filtri per month, category, text search e income/expense split
 * Storico movimenti solo nella sessione corrente, con tasto di reset dedicato
 * Example CSV available in `examples/sample-mediolanum.csv`
+* Consolidamento: repository versionato, `AUTH_SECRET` obbligatorio, CORS ristretto, rate limiting su signup/login, ESLint + CI, test unitari su API e frontend
 
 ## ▶️ Local Run
 
 ```bash
 npm install
+cp .env.example .env
+```
+
+Genera poi un `AUTH_SECRET` reale e scrivilo nel `.env` (l'API non parte senza):
+
+```bash
+node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+```
+
+Il `.env` deve restare nella root del repository: viene caricato risalendo le cartelle, anche quando gli script girano dentro `apps/api`.
+
+```bash
 npm run db:push
 npm run db:seed
 npm run dev
@@ -27,11 +40,16 @@ npm run dev
 Useful commands:
 
 ```bash
-npm run build
+npm run build       # build api + web
+npm run lint        # ESLint sull'intero monorepo
+npm test            # test api + web
 npm run test:api
+npm run test:web
 ```
 
-Project docs live under `docs/`.
+Le stesse verifiche girano in CI (`.github/workflows/ci.yml`) su push e pull request.
+
+Project docs live under `docs/`. I contratti API effettivi sono in `docs/api-contracts.md`; le sezioni di specifica più sotto descrivono la visione iniziale del prodotto e non l'implementazione corrente.
 
 ## 🎯 Goal
 
@@ -173,6 +191,8 @@ Logic:
 ---
 
 ## ⚙️ API Endpoints
+
+Specifica originale (non allineata all'implementazione, vedi `docs/api-contracts.md`):
 
 * POST /upload
 * GET /transactions
