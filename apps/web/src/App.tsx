@@ -2126,8 +2126,7 @@ export default function App() {
 								<div className="filter-toolbar__meta">
 									<p className="filter-summary">
 										I filtri agiscono solo sul dataset corrente. Il reset svuota
-										la sessione e pulisce anche eventuale storico legacy rimasto
-										nel database locale.
+										la sessione corrente senza toccare le regole salvate.
 									</p>
 									<button
 										className="button button--secondary filter-reset"

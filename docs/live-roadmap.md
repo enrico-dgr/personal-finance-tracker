@@ -1,7 +1,6 @@
 # Live Roadmap
 
 ## NOW
-- Verificare in browser reale le schermate dopo lo split di `App.tsx`, in particolare regole e modale di correzione multi-riga.
 - Valutare le 13 vulnerabilità riportate da `npm audit` (1 critical) e decidere quali aggiornamenti sono sicuri.
 - Validare parser e mapping su altri export reali Mediolanum o su mesi diversi dello stesso conto.
 - Raffinare categorie e dizionario merchant italiani per supermercati, telco, utenze, carburante, fee, prelievi ed entrate.

@@ -37,6 +37,7 @@
 - Smoke test su avvio API, health, categorie, upload via proxy Vite, signup/login, creazione e lettura regole.
 - Verifica che gli endpoint legacy sui movimenti rispondano 404 e che il rate limiting auth risponda 429 oltre soglia.
 - Verifica che gli header CORS vengano emessi solo per le origin consentite.
+- Smoke test browser sull'intero flusso dopo lo split di `App.tsx`: dashboard, libreria regole, pagina account, import CSV con classificazione corretta e modale di correzione multi-riga con preview del match.
 - Smoke test browser su header utente, dropdown account e pagina auth dedicata.
 - Smoke test browser su dashboard ridisegnata, header sticky, insight panel e paginazione movimenti.
 - Smoke test browser su grafico analytics full-width con filtri merchant/categoria e reset coerente del pannello.
