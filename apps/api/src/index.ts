@@ -1,8 +1,9 @@
-import 'dotenv/config';
+import './lib/env.js';
 
 import { compare, hash } from 'bcryptjs';
 import cors from 'cors';
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import { z } from 'zod';
 
@@ -49,7 +50,32 @@ const ruleSearchSchema = z.object({
   q: z.string().trim().optional().default('')
 });
 
-app.use(cors());
+const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter((origin) => origin.length > 0);
+
+/**
+ * Credential endpoints are the only unauthenticated write surface, so they get
+ * their own throttle to keep brute-force attempts expensive.
+ */
+const authRateLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Too many authentication attempts. Try again later.' }
+});
+
+app.use(
+  cors({
+    origin(origin, callback) {
+      // Requests without an Origin header (curl, the Vite dev proxy, same-origin
+      // fetches) are not subject to CORS, so they pass through untouched.
+      callback(null, !origin || allowedOrigins.includes(origin));
+    }
+  })
+);
 app.use(express.json());
 app.use(attachOptionalAuth);
 
@@ -84,7 +110,7 @@ app.get('/api/auth/me', async (request: AuthenticatedRequest, response) => {
   response.json({ user });
 });
 
-app.post('/api/auth/signup', async (request, response) => {
+app.post('/api/auth/signup', authRateLimiter, async (request, response) => {
   const parsedBody = authSchema.safeParse(request.body);
 
   if (!parsedBody.success) {
@@ -124,7 +150,7 @@ app.post('/api/auth/signup', async (request, response) => {
   });
 });
 
-app.post('/api/auth/login', async (request, response) => {
+app.post('/api/auth/login', authRateLimiter, async (request, response) => {
   const parsedBody = authSchema.safeParse(request.body);
 
   if (!parsedBody.success) {
@@ -234,31 +260,6 @@ app.delete('/api/rules/:id', async (request: AuthenticatedRequest, response) => 
   response.status(204).send();
 });
 
-app.get('/api/transactions', (_request, response) => {
-  response.json({ transactions: [] });
-});
-
-app.get('/api/stats', (_request, response) => {
-  response.json({
-    overview: {
-      totalTransactions: 0,
-      currentMonthSpend: 0,
-      ruleCount: 0,
-      referenceMonth: new Date().toISOString().slice(0, 7)
-    },
-    monthlySpend: [],
-    categorySpend: []
-  });
-});
-
-app.delete('/api/transactions', async (_request, response) => {
-  const deletedTransactions = await prisma.transaction.deleteMany();
-
-  response.json({
-    deletedCount: deletedTransactions.count
-  });
-});
-
 app.post('/api/upload', upload.single('file'), async (request, response) => {
   if (!request.file) {
     response.status(400).json({ message: 'CSV file is required.' });
@@ -296,12 +297,6 @@ app.post('/api/upload', upload.single('file'), async (request, response) => {
     createdCount: rows.length,
     updatedCount: 0,
     transactions
-  });
-});
-
-app.patch('/api/transactions/:id', (_request, response) => {
-  response.status(410).json({
-    message: 'Transactions are session-only. Update them in the browser state instead.'
   });
 });
 

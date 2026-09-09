@@ -7,7 +7,6 @@ import {
 } from 'react';
 
 import {
-	clearPersistedHistory,
 	loadCategories,
 	loadCurrentUser,
 	loadDefaultRules,
@@ -1313,8 +1312,6 @@ export default function App() {
 		setStatusMessage('');
 
 		try {
-			const result = await clearPersistedHistory();
-
 			setTransactions([]);
 			setSelectedAnalyticsMerchants([]);
 			setSelectedAnalyticsCategories([]);
@@ -1326,11 +1323,7 @@ export default function App() {
 			setCurrentTransactionPage(1);
 			applySelection(null);
 			resetTransactionFilters();
-			setStatusMessage(
-				result.deletedCount > 0
-					? `Storico azzerato. Rimossi anche ${result.deletedCount} record legacy dal database locale.`
-					: 'Storico azzerato. Nessun dato storico persistente residuo nel database locale.'
-			);
+			setStatusMessage('Storico azzerato. Le regole restano invariate.');
 		} catch (error) {
 			setErrorMessage(
 				error instanceof Error

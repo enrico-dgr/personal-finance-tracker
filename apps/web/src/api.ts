@@ -201,9 +201,3 @@ export function removeRule(authToken: string, id: string) {
     method: 'DELETE'
   }, authToken);
 }
-
-export function clearPersistedHistory() {
-  return fetchJson<{ deletedCount: number }>('/api/transactions', {
-    method: 'DELETE'
-  });
-}

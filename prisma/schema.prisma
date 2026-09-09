@@ -16,6 +16,9 @@ model User {
   merchantRules MerchantRule[]
 }
 
+/// Deprecated by ADR-0002: transaction history is session-only and this table is
+/// never written to. Kept in the schema so an existing local dev.db stays readable;
+/// see ADR-0003 for the conditions under which it gets dropped.
 model Transaction {
   id                    String   @id @default(cuid())
   fingerprint           String   @unique
