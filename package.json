@@ -9,6 +9,8 @@
     "dev": "concurrently \"npm run dev --workspace apps/api\" \"npm run dev --workspace apps/web\"",
     "build": "npm run build --workspace apps/api && npm run build --workspace apps/web",
     "test:api": "npm run test --workspace apps/api",
+    "test:web": "npm run test --workspace apps/web",
+    "test": "npm run test:api && npm run test:web",
     "db:generate": "prisma generate",
     "db:push": "prisma db push",
     "db:seed": "tsx prisma/seed.ts"
