@@ -66,7 +66,6 @@ import {
 } from './routing';
 import { buildLocalRule, mergeRuleCollection } from './ruleState';
 import {
-	buildLineChartPoints,
 	buildPaginationItems,
 	toggleSelection,
 } from './uiHelpers';

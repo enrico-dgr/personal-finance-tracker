@@ -1,29 +1,7 @@
 /**
- * Small presentation-only helpers shared by the dashboard: chart point maths,
- * pagination layout and multi-select toggling.
+ * Small presentation-only helpers shared by the dashboard: pagination layout
+ * and multi-select toggling.
  */
-export function buildLineChartPoints(values: number[], width: number, height: number) {
-	if (!values.length) {
-		return '';
-	}
-
-	const paddingX = 18;
-	const paddingY = 18;
-	const usableWidth = width - paddingX * 2;
-	const usableHeight = height - paddingY * 2;
-	const maxValue = Math.max(...values, 1);
-
-	return values
-		.map((value, index) => {
-			const x =
-				paddingX + (usableWidth * index) / Math.max(values.length - 1, 1);
-			const y = height - paddingY - (value / maxValue) * usableHeight;
-
-			return `${x},${y}`;
-		})
-		.join(' ');
-}
-
 export function buildPaginationItems(currentPage: number, totalPages: number) {
 	if (totalPages <= 1) {
 		return [1];

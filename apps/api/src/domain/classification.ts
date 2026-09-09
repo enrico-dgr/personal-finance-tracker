@@ -448,35 +448,6 @@ function findRuleMatch(
   return null;
 }
 
-function hasPhraseMatch(cleanedDescription: string, keyword: string) {
-  const sanitizedKeyword = sanitizePattern(keyword);
-
-  if (!sanitizedKeyword) {
-    return false;
-  }
-
-  const regex = new RegExp(`\\b${escapeRegex(sanitizedKeyword)}\\b`);
-  return regex.test(cleanedDescription);
-}
-
-function findKeywordMatch(cleanedDescription: string) {
-  const matches = keywordRules
-    .map((rule) => ({
-      rule,
-      longestKeywordLength: Math.max(
-        ...rule.keywords
-          .map((keyword) => sanitizePattern(keyword))
-          .filter((keyword) => hasPhraseMatch(cleanedDescription, keyword))
-          .map((keyword) => keyword.length),
-        0
-      )
-    }))
-    .filter((entry) => entry.longestKeywordLength > 0)
-    .sort((left, right) => right.longestKeywordLength - left.longestKeywordLength);
-
-  return matches[0]?.rule;
-}
-
 function findMccMatch(rawDescription: string) {
   return mccRules.find((rule) => rawDescription.includes(`MCC ${rule.code}`));
 }

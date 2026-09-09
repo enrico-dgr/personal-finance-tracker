@@ -1,10 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-	buildLineChartPoints,
-	buildPaginationItems,
-	toggleSelection,
-} from './uiHelpers';
+import { buildPaginationItems, toggleSelection } from './uiHelpers';
 
 describe('buildPaginationItems', () => {
 	it('collapses to a single page when there is nothing to paginate', () => {
@@ -44,27 +40,5 @@ describe('toggleSelection', () => {
 		toggleSelection(original, 'b');
 
 		expect(original).toEqual(['a']);
-	});
-});
-
-describe('buildLineChartPoints', () => {
-	it('returns an empty string for an empty series', () => {
-		expect(buildLineChartPoints([], 400, 200)).toBe('');
-	});
-
-	it('emits one coordinate pair per value', () => {
-		expect(buildLineChartPoints([1, 2, 3], 400, 200).split(' ')).toHaveLength(3);
-	});
-
-	it('puts the highest value at the top of the plot area', () => {
-		const [first, second] = buildLineChartPoints([0, 10], 400, 200).split(' ');
-		const firstY = Number(first!.split(',')[1]);
-		const secondY = Number(second!.split(',')[1]);
-
-		expect(secondY).toBeLessThan(firstY);
-	});
-
-	it('keeps a single point pinned to the left padding', () => {
-		expect(buildLineChartPoints([5], 400, 200).split(',')[0]).toBe('18');
 	});
 });

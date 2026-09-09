@@ -9,11 +9,9 @@ import { z } from 'zod';
 
 import {
   buildFingerprint,
-  buildEffectiveRules,
   classifyDescription,
   DEFAULT_CATEGORIES,
   listDefaultMerchantRules,
-  type MerchantRuleMatcher,
   type RulePatternType
 } from './domain/classification.js';
 import { parseCsvTransactions } from './domain/csv.js';
