@@ -25,7 +25,6 @@ import {
 	type Transaction,
 } from './api';
 import {
-	buildLocalRuleId,
 	clearStoredAuthToken,
 	loadLocalRules,
 	loadStoredAuthToken,
@@ -50,21 +49,29 @@ import {
 } from './ruleLibrary';
 import { buildSessionStats } from './sessionStats';
 
-type PageMode = 'dashboard' | 'rules' | 'auth';
+import { SearchableMultiSelect } from './components/SearchableMultiSelect';
+import {
+	describeMonthComparison,
+	formatAmount,
+	formatDate,
+	formatFilterSummary,
+	formatMonth,
+	formatSelectSummary,
+} from './formatters';
+import {
+	buildHashRoute,
+	readHashRoute,
+	type AuthMode,
+	type PageMode,
+} from './routing';
+import { buildLocalRule, mergeRuleCollection } from './ruleState';
+import {
+	buildLineChartPoints,
+	buildPaginationItems,
+	toggleSelection,
+} from './uiHelpers';
+
 type AmountFilter = 'all' | 'expenses' | 'income';
-type AuthMode = 'login' | 'signup';
-
-type HashRoute = {
-	page: PageMode;
-	authMode: AuthMode;
-};
-
-type SearchableMultiSelectOption = {
-	value: string;
-	label: string;
-	helperText?: string;
-	searchText?: string;
-};
 
 const ALL_FILTER_VALUE = '__all__';
 const TRANSACTIONS_PER_PAGE = 12;
@@ -72,394 +79,6 @@ const TREND_CHART_WIDTH = 420;
 const TREND_CHART_HEIGHT = 170;
 const LIQUIDITY_CHART_WIDTH = 1040;
 const LIQUIDITY_CHART_HEIGHT = 320;
-
-const currencyFormatter = new Intl.NumberFormat('it-IT', {
-	style: 'currency',
-	currency: 'EUR',
-});
-
-const dateFormatter = new Intl.DateTimeFormat('it-IT', {
-	day: '2-digit',
-	month: 'short',
-	year: 'numeric',
-});
-
-const monthFormatter = new Intl.DateTimeFormat('it-IT', {
-	month: 'long',
-	year: 'numeric',
-});
-
-function formatMonth(month: string) {
-	return monthFormatter.format(new Date(`${month}-01T00:00:00Z`));
-}
-
-function formatAmount(amount: number) {
-	return currencyFormatter.format(amount);
-}
-
-function useDebouncedValue(value: string, delay = 220) {
-	const [debouncedValue, setDebouncedValue] = useState(value);
-
-	useEffect(() => {
-		const timeoutId = window.setTimeout(() => {
-			setDebouncedValue(value);
-		}, delay);
-
-		return () => {
-			window.clearTimeout(timeoutId);
-		};
-	}, [delay, value]);
-
-	return debouncedValue;
-}
-
-function formatSelectSummary(
-	selectedValues: string[],
-	emptyLabel: string,
-	pluralLabel: string
-) {
-	if (selectedValues.length === 0) {
-		return emptyLabel;
-	}
-
-	if (selectedValues.length === 1) {
-		return selectedValues[0];
-	}
-
-	return `${selectedValues.length} ${pluralLabel}`;
-}
-
-function describeMonthComparison(
-	delta: number,
-	previousMonth: string,
-	mode: 'expense' | 'savings'
-) {
-	if (Math.abs(delta) < 0.01) {
-		return `In linea con ${formatMonth(previousMonth)}.`;
-	}
-
-	if (mode === 'expense') {
-		return delta < 0
-			? `${formatAmount(Math.abs(delta))} in meno di ${formatMonth(previousMonth)}.`
-			: `${formatAmount(delta)} in piu di ${formatMonth(previousMonth)}.`;
-	}
-
-	return delta > 0
-		? `${formatAmount(delta)} meglio di ${formatMonth(previousMonth)}.`
-		: `${formatAmount(Math.abs(delta))} peggio di ${formatMonth(previousMonth)}.`;
-}
-
-function SearchableMultiSelect(props: {
-	label: string;
-	placeholder: string;
-	searchPlaceholder: string;
-	emptyMessage: string;
-	options: SearchableMultiSelectOption[];
-	selectedValues: string[];
-	onToggleValue: (value: string) => void;
-	onClearSelection: () => void;
-	resetVersion: number;
-	selectionSummary: string;
-	selectedCountLabel: string;
-}) {
-	const {
-		label,
-		placeholder,
-		searchPlaceholder,
-		emptyMessage,
-		options,
-		selectedValues,
-		onToggleValue,
-		onClearSelection,
-		resetVersion,
-		selectionSummary,
-		selectedCountLabel,
-	} = props;
-	const [isOpen, setIsOpen] = useState(false);
-	const [searchValue, setSearchValue] = useState('');
-	const containerRef = useRef<HTMLDivElement | null>(null);
-	const debouncedSearch = useDebouncedValue(searchValue);
-	const normalizedSearch = debouncedSearch.trim().toLowerCase();
-	const filteredOptions = options.filter((option) =>
-		normalizedSearch.length === 0
-			? true
-			: [option.label, option.helperText, option.searchText]
-					.filter(Boolean)
-					.join(' ')
-					.toLowerCase()
-					.includes(normalizedSearch)
-	);
-
-	useEffect(() => {
-		setSearchValue('');
-		setIsOpen(false);
-	}, [resetVersion]);
-
-	useEffect(() => {
-		if (!isOpen || typeof window === 'undefined') {
-			return;
-		}
-
-		function handlePointerDown(event: MouseEvent) {
-			if (
-				containerRef.current &&
-				!containerRef.current.contains(event.target as Node)
-			) {
-				setIsOpen(false);
-			}
-		}
-
-		function handleKeyDown(event: KeyboardEvent) {
-			if (event.key === 'Escape') {
-				setIsOpen(false);
-			}
-		}
-
-		window.addEventListener('mousedown', handlePointerDown);
-		window.addEventListener('keydown', handleKeyDown);
-
-		return () => {
-			window.removeEventListener('mousedown', handlePointerDown);
-			window.removeEventListener('keydown', handleKeyDown);
-		};
-	}, [isOpen]);
-
-	return (
-		<div className={`search-select ${isOpen ? 'is-open' : ''}`} ref={containerRef}>
-			<span className="search-select__label">{label}</span>
-			<button
-				aria-expanded={isOpen}
-				className="search-select__trigger"
-				onClick={() => setIsOpen((currentValue) => !currentValue)}
-				type="button"
-			>
-				<span className="search-select__summary">
-					{selectedValues.length === 0 ? placeholder : selectionSummary}
-				</span>
-				<span className="search-select__meta">
-					<strong>{selectedValues.length === 0 ? 'Tutti' : selectedValues.length}</strong>
-					<small>{selectedCountLabel}</small>
-				</span>
-			</button>
-			{isOpen ? (
-				<div className="search-select__panel">
-					<label className="search-select__search">
-						<input
-							autoFocus
-							onChange={(event) => setSearchValue(event.target.value)}
-							placeholder={searchPlaceholder}
-							type="search"
-							value={searchValue}
-						/>
-					</label>
-					<div className="search-select__panel-meta">
-						<span>
-							{selectedValues.length
-								? `${selectedValues.length} filtri attivi`
-								: 'Nessun filtro attivo'}
-						</span>
-						<button
-							className="search-select__clear"
-							onClick={() => {
-								onClearSelection();
-								setSearchValue('');
-							}}
-							type="button"
-						>
-							Pulisci
-						</button>
-					</div>
-					<div className="search-select__options">
-						{filteredOptions.length ? (
-							filteredOptions.map((option) => {
-								const isSelected = selectedValues.includes(option.value);
-
-								return (
-									<button
-										className={`search-select__option ${isSelected ? 'is-active' : ''}`}
-										key={option.value}
-										onClick={() => onToggleValue(option.value)}
-										type="button"
-									>
-										<span>{option.label}</span>
-										{option.helperText ? <small>{option.helperText}</small> : null}
-									</button>
-								);
-							})
-						) : (
-							<p className="empty-state">{emptyMessage}</p>
-						)}
-					</div>
-				</div>
-			) : null}
-		</div>
-	);
-}
-
-function buildLineChartPoints(values: number[], width: number, height: number) {
-	if (!values.length) {
-		return '';
-	}
-
-	const paddingX = 18;
-	const paddingY = 18;
-	const usableWidth = width - paddingX * 2;
-	const usableHeight = height - paddingY * 2;
-	const maxValue = Math.max(...values, 1);
-
-	return values
-		.map((value, index) => {
-			const x =
-				paddingX + (usableWidth * index) / Math.max(values.length - 1, 1);
-			const y = height - paddingY - (value / maxValue) * usableHeight;
-
-			return `${x},${y}`;
-		})
-		.join(' ');
-}
-
-function buildPaginationItems(currentPage: number, totalPages: number) {
-	if (totalPages <= 1) {
-		return [1];
-	}
-
-	const pageCandidates = new Set([
-		1,
-		totalPages,
-		currentPage - 1,
-		currentPage,
-		currentPage + 1,
-	]);
-	const sanitizedPages = [...pageCandidates]
-		.filter((page) => page >= 1 && page <= totalPages)
-		.sort((left, right) => left - right);
-	const paginationItems: Array<number | 'ellipsis'> = [];
-
-	sanitizedPages.forEach((page, index) => {
-		const previousPage = sanitizedPages[index - 1];
-
-		if (previousPage && page - previousPage > 1) {
-			paginationItems.push('ellipsis');
-		}
-
-		paginationItems.push(page);
-	});
-
-	return paginationItems;
-}
-
-function toggleSelection(currentValues: string[], nextValue: string) {
-	return currentValues.includes(nextValue)
-		? currentValues.filter((value) => value !== nextValue)
-		: [...currentValues, nextValue];
-}
-
-function formatFilterSummary(
-	count: number,
-	singularLabel: string,
-	pluralLabel: string,
-	fallbackLabel: string
-) {
-	if (count === 0) {
-		return fallbackLabel;
-	}
-
-	return `${count} ${count === 1 ? singularLabel : pluralLabel}`;
-}
-
-function mergeRuleCollection(
-	currentRules: MerchantRule[],
-	incomingRule: MerchantRule
-) {
-	const existingRuleIndex = currentRules.findIndex(
-		(rule) =>
-			rule.id === incomingRule.id ||
-			(rule.defaultRuleId !== null &&
-				incomingRule.defaultRuleId !== null &&
-				rule.defaultRuleId === incomingRule.defaultRuleId) ||
-			(rule.pattern === incomingRule.pattern &&
-				rule.patternType === incomingRule.patternType &&
-				rule.defaultRuleId === incomingRule.defaultRuleId)
-	);
-
-	if (existingRuleIndex === -1) {
-		return [incomingRule, ...currentRules];
-	}
-
-	const nextRules = [...currentRules];
-	nextRules.splice(existingRuleIndex, 1, incomingRule);
-	return nextRules;
-}
-
-function buildLocalRule(
-	payload: RulePayload,
-	existingRule?: MerchantRule | null
-) {
-	const timestamp = new Date().toISOString();
-
-	return {
-		id: existingRule?.id ?? buildLocalRuleId(),
-		defaultRuleId: payload.defaultRuleId ?? existingRule?.defaultRuleId ?? null,
-		pattern: payload.pattern,
-		patternType: payload.patternType,
-		normalizedName: payload.normalizedName,
-		category: payload.category,
-		priority: payload.priority,
-		isDisabled: Boolean(payload.isDisabled),
-		source: payload.defaultRuleId ? 'default' : 'custom',
-		createdAt: existingRule?.createdAt ?? timestamp,
-		updatedAt: timestamp,
-	} satisfies MerchantRule;
-}
-
-function readHashRoute(): HashRoute {
-	if (typeof window === 'undefined') {
-		return {
-			page: 'dashboard',
-			authMode: 'login',
-		};
-	}
-
-	const normalizedHash = window.location.hash.replace(/^#\/?/, '');
-
-	if (normalizedHash === 'rules') {
-		return {
-			page: 'rules',
-			authMode: 'login',
-		};
-	}
-
-	if (normalizedHash === 'auth' || normalizedHash === 'auth/login') {
-		return {
-			page: 'auth',
-			authMode: 'login',
-		};
-	}
-
-	if (normalizedHash === 'auth/signup') {
-		return {
-			page: 'auth',
-			authMode: 'signup',
-		};
-	}
-
-	return {
-		page: 'dashboard',
-		authMode: 'login',
-	};
-}
-
-function buildHashRoute(page: PageMode, authMode: AuthMode = 'login') {
-	if (page === 'rules') {
-		return '#/rules';
-	}
-
-	if (page === 'auth') {
-		return authMode === 'signup' ? '#/auth/signup' : '#/auth/login';
-	}
-
-	return '#/dashboard';
-}
 
 export default function App() {
 	const initialRoute = readHashRoute();
@@ -2563,7 +2182,7 @@ export default function App() {
 															/>
 														</td>
 														<td>
-															{dateFormatter.format(new Date(transaction.date))}
+															{formatDate(transaction.date)}
 														</td>
 														<td>
 															<div className="cell-stack">
@@ -2867,7 +2486,7 @@ export default function App() {
 												{rule.source === 'default' ? 'Default' : 'Custom'} ·{' '}
 												{rule.patternType === 'regex' ? 'Regex' : 'Contains'} ·{' '}
 												priorita {rule.priority} · aggiornato il{' '}
-												{dateFormatter.format(new Date(rule.updatedAt))}
+												{formatDate(rule.updatedAt)}
 											</small>
 										</button>
 									))}
