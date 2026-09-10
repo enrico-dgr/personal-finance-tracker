@@ -1437,7 +1437,7 @@ export default function App() {
 
 									<p className="auth-note">
 										Se accedi, sincronizzi solo le regole. Se resti anonimo, le
-										regole restano nel browser e i movimenti non vengono salvati
+										regole restano nel browser. In ogni caso i movimenti non vengono salvati
 										da nessuna parte.
 									</p>
 								</>
@@ -1446,11 +1446,7 @@ export default function App() {
 
 						<article className="panel panel--accent auth-route__side">
 							<div className="panel-heading">
-								<h2>Come funziona davvero</h2>
-								<p>
-									Questo era il mio punto 1: distinguere in modo chiaro ciò che
-									è locale, ciò che si sincronizza e ciò che resta temporaneo.
-								</p>
+								<h2>COME FUNZIONA</h2>
 							</div>
 
 							<div className="status-stack">
