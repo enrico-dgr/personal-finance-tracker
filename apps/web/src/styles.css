@@ -1382,10 +1382,20 @@ tbody tr.is-selected {
   height: 1.1rem;
 }
 
+.rule-list-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.rule-list-panel, .editor-panel {
+  height: 800px;
+}
+
 .rule-list {
   display: grid;
   gap: 0.8rem;
   margin-top: 1rem;
+  overflow-y: auto;
 }
 
 .rule-card {

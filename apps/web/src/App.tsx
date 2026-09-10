@@ -2663,7 +2663,7 @@ export default function App() {
 							</form>
 						</article>
 
-						<article className="panel">
+						<article className="panel rule-list-panel">
 							<div className="panel-heading panel-heading--inline">
 								<div>
 									<h2>Libreria regole</h2>
