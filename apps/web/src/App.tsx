@@ -74,10 +74,7 @@ import {
 	type PageMode,
 } from './routing';
 import { buildLocalRule, mergeRuleCollection } from './ruleState';
-import {
-	buildPaginationItems,
-	toggleSelection,
-} from './uiHelpers';
+import { buildPaginationItems, toggleSelection } from './uiHelpers';
 
 type AmountFilter = 'all' | 'expenses' | 'income';
 
@@ -111,7 +108,8 @@ export default function App() {
 	const [normalizedDescription, setNormalizedDescription] = useState('');
 	const [category, setCategory] = useState('Other');
 	const [rulePattern, setRulePattern] = useState('');
-	const [rulePatternType, setRulePatternType] = useState<RulePatternType>('contains');
+	const [rulePatternType, setRulePatternType] =
+		useState<RulePatternType>('contains');
 	const [rulePriority, setRulePriority] = useState(1000);
 	const [saveAsRule, setSaveAsRule] = useState(true);
 	const [transactionSearch, setTransactionSearch] = useState('');
@@ -141,12 +139,18 @@ export default function App() {
 	const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 	const [isCorrectionModalOpen, setIsCorrectionModalOpen] = useState(false);
 	const [currentTransactionPage, setCurrentTransactionPage] = useState(1);
-	const [selectedTransactionIds, setSelectedTransactionIds] = useState<string[]>([]);
-	const [selectedAnalyticsMerchants, setSelectedAnalyticsMerchants] = useState<string[]>([]);
-	const [selectedAnalyticsCategories, setSelectedAnalyticsCategories] = useState<string[]>([]);
+	const [selectedTransactionIds, setSelectedTransactionIds] = useState<
+		string[]
+	>([]);
+	const [selectedAnalyticsMerchants, setSelectedAnalyticsMerchants] = useState<
+		string[]
+	>([]);
+	const [selectedAnalyticsCategories, setSelectedAnalyticsCategories] =
+		useState<string[]>([]);
 	const [analyticsStartMonth, setAnalyticsStartMonth] = useState('');
 	const [analyticsEndMonth, setAnalyticsEndMonth] = useState('');
-	const [analyticsFilterResetVersion, setAnalyticsFilterResetVersion] = useState(0);
+	const [analyticsFilterResetVersion, setAnalyticsFilterResetVersion] =
+		useState(0);
 	const [fixedExpenseOverrides, setFixedExpenseOverrides] = useState<
 		Record<string, FixedExpenseOverrideState>
 	>(() => loadFixedExpenseOverrides());
@@ -241,24 +245,29 @@ export default function App() {
 		);
 	const manualRulePreviewCount = saveAsRule
 		? countMatchingTransactions(
-			{
-				pattern: rulePattern.trim() || normalizedDescription.trim(),
-				patternType: rulePatternType,
-			},
-			selectedTransactions
+				{
+					pattern: rulePattern.trim() || normalizedDescription.trim(),
+					patternType: rulePatternType,
+				},
+				selectedTransactions
 		  )
 		: 0;
 	const monthlySpend = stats.monthlySpend;
 	const monthlySpendValues = monthlySpend.map((item) => item.total);
-	const monthlyTrendScale = buildChartScale(monthlySpendValues.length ? monthlySpendValues : [0], 4);
+	const monthlyTrendScale = buildChartScale(
+		monthlySpendValues.length ? monthlySpendValues : [0],
+		4
+	);
 	const monthlyTrendChartPoints = buildPolylineCoordinates(
 		monthlySpendValues,
 		monthlyTrendScale,
 		TREND_CHART_WIDTH,
 		TREND_CHART_HEIGHT
 	);
-	const analyticsRangeStart = analyticsStartMonth || analyticsMonthOptions[0] || '';
-	const analyticsRangeEnd = analyticsEndMonth || analyticsMonthOptions.at(-1) || '';
+	const analyticsRangeStart =
+		analyticsStartMonth || analyticsMonthOptions[0] || '';
+	const analyticsRangeEnd =
+		analyticsEndMonth || analyticsMonthOptions.at(-1) || '';
 	const liquidityChartSeries = buildLiquidityChartSeries({
 		transactions,
 		startMonth: analyticsRangeStart,
@@ -266,27 +275,43 @@ export default function App() {
 		selectedMerchants: selectedAnalyticsMerchants,
 		selectedCategories: selectedAnalyticsCategories,
 	});
-	const liquidityChartValues = liquidityChartSeries.flatMap((point) => [point.savings, point.filteredSpend]);
-	const liquidityChartScale = buildChartScale(liquidityChartValues.length ? liquidityChartValues : [0], 5);
+	const liquidityChartValues = liquidityChartSeries.flatMap((point) => [
+		point.savings,
+		point.filteredSpend,
+	]);
+	const liquidityChartScale = buildChartScale(
+		liquidityChartValues.length ? liquidityChartValues : [0],
+		5
+	);
 	const liquiditySavingsPoints = buildPolylineCoordinates(
 		liquidityChartSeries.map((point) => point.savings),
 		liquidityChartScale,
 		LIQUIDITY_CHART_WIDTH,
 		LIQUIDITY_CHART_HEIGHT
 	);
-	const liquidityZeroY = getChartY(0, liquidityChartScale, LIQUIDITY_CHART_HEIGHT);
+	const liquidityZeroY = getChartY(
+		0,
+		liquidityChartScale,
+		LIQUIDITY_CHART_HEIGHT
+	);
 	const liquidityFilteredSpendTotal = Number(
-		liquidityChartSeries.reduce((total, point) => total + Math.abs(point.filteredSpend), 0).toFixed(2)
+		liquidityChartSeries
+			.reduce((total, point) => total + Math.abs(point.filteredSpend), 0)
+			.toFixed(2)
 	);
 	const liquidityAverageSavings = liquidityChartSeries.length
 		? Number(
 				(
-					liquidityChartSeries.reduce((total, point) => total + point.savings, 0) /
-					liquidityChartSeries.length
+					liquidityChartSeries.reduce(
+						(total, point) => total + point.savings,
+						0
+					) / liquidityChartSeries.length
 				).toFixed(2)
 		  )
 		: 0;
-	const positiveSavingsMonths = liquidityChartSeries.filter((point) => point.savings > 0).length;
+	const positiveSavingsMonths = liquidityChartSeries.filter(
+		(point) => point.savings > 0
+	).length;
 	const recurringMerchantInsights = buildRecurringMerchantInsights({
 		transactions,
 		startMonth: analyticsRangeStart,
@@ -296,15 +321,23 @@ export default function App() {
 	});
 	const currentLiquidityMonth = liquidityChartSeries.at(-1) ?? null;
 	const previousLiquidityMonth = liquidityChartSeries.at(-2) ?? null;
-	const currentSelectedSpend = Math.abs(currentLiquidityMonth?.filteredSpend ?? 0);
-	const previousSelectedSpend = Math.abs(previousLiquidityMonth?.filteredSpend ?? 0);
+	const currentSelectedSpend = Math.abs(
+		currentLiquidityMonth?.filteredSpend ?? 0
+	);
+	const previousSelectedSpend = Math.abs(
+		previousLiquidityMonth?.filteredSpend ?? 0
+	);
 	const selectedSpendDelta =
 		currentLiquidityMonth && previousLiquidityMonth
 			? Number((currentSelectedSpend - previousSelectedSpend).toFixed(2))
 			: null;
 	const savingsDelta =
 		currentLiquidityMonth && previousLiquidityMonth
-			? Number((currentLiquidityMonth.savings - previousLiquidityMonth.savings).toFixed(2))
+			? Number(
+					(
+						currentLiquidityMonth.savings - previousLiquidityMonth.savings
+					).toFixed(2)
+			  )
 			: null;
 	const liquidityFilterSummary = [
 		formatFilterSummary(
@@ -320,7 +353,9 @@ export default function App() {
 			'tutte le categorie'
 		),
 		analyticsRangeStart && analyticsRangeEnd
-			? `${formatMonth(analyticsRangeStart)} - ${formatMonth(analyticsRangeEnd)}`
+			? `${formatMonth(analyticsRangeStart)} - ${formatMonth(
+					analyticsRangeEnd
+			  )}`
 			: 'intero periodo',
 	].join(' • ');
 	const previousMonthSpend = monthlySpend.at(-2)?.total ?? null;
@@ -597,13 +632,17 @@ export default function App() {
 
 	function selectVisibleTransactions(shouldSelect: boolean) {
 		setSelectedTransactionIds((currentIds) => {
-			const visibleIds = paginatedTransactions.map((transaction) => transaction.id);
+			const visibleIds = paginatedTransactions.map(
+				(transaction) => transaction.id
+			);
 
 			if (shouldSelect) {
 				return [...new Set([...currentIds, ...visibleIds])];
 			}
 
-			return currentIds.filter((transactionId) => !visibleIds.includes(transactionId));
+			return currentIds.filter(
+				(transactionId) => !visibleIds.includes(transactionId)
+			);
 		});
 	}
 
@@ -633,7 +672,9 @@ export default function App() {
 		setSelectedAnalyticsMerchants([]);
 		setSelectedAnalyticsCategories([]);
 		setAnalyticsStartMonth(analyticsMonthOptions[0] ?? '');
-		setAnalyticsEndMonth(analyticsMonthOptions.at(-1) ?? analyticsMonthOptions[0] ?? '');
+		setAnalyticsEndMonth(
+			analyticsMonthOptions.at(-1) ?? analyticsMonthOptions[0] ?? ''
+		);
 		setAnalyticsFilterResetVersion((currentValue) => currentValue + 1);
 	}
 
@@ -810,7 +851,7 @@ export default function App() {
 						category: ruleEditorCategory,
 						priority: ruleEditorPriority,
 						isDisabled: false,
-					});
+				  });
 			const nextEffectiveRules = buildEffectiveRuleLibrary(
 				defaultRules,
 				mergeRuleCollection(rules, savedRule)
@@ -823,8 +864,12 @@ export default function App() {
 			}
 
 			populateRuleEditor(
-				nextEffectiveRules.find((rule) =>
-					rule.id === (selectedRule?.source === 'default' ? selectedRule.id : savedRule.id)
+				nextEffectiveRules.find(
+					(rule) =>
+						rule.id ===
+						(selectedRule?.source === 'default'
+							? selectedRule.id
+							: savedRule.id)
 				) ?? null
 			);
 			setStatusMessage(
@@ -889,7 +934,10 @@ export default function App() {
 			saveLocalRules(nextRules);
 			populateRuleEditor(null);
 
-			const nextEffectiveRules = buildEffectiveRuleLibrary(defaultRules, nextRules);
+			const nextEffectiveRules = buildEffectiveRuleLibrary(
+				defaultRules,
+				nextRules
+			);
 			const { transactions: reclassifiedTransactions, changedCount } =
 				reclassifyTransactions(transactions, nextEffectiveRules);
 
@@ -1262,7 +1310,9 @@ export default function App() {
 						<div className="hero-badge">
 							<span className="hero-badge__label">Persistenza</span>
 							<strong>
-								{isAuthenticated ? 'Regole sincronizzate' : 'Solo regole, niente storico'}
+								{isAuthenticated
+									? 'Regole sincronizzate'
+									: 'Solo regole, niente storico'}
 							</strong>
 							<span>
 								{isAuthenticated
@@ -1275,7 +1325,11 @@ export default function App() {
 					<section className="auth-route__grid">
 						<article className="panel">
 							<div className="panel-heading">
-								<h2>{isAuthenticated ? 'Profilo attivo' : 'Accesso e registrazione'}</h2>
+								<h2>
+									{isAuthenticated
+										? 'Profilo attivo'
+										: 'Accesso e registrazione'}
+								</h2>
 								<p>
 									{isAuthenticated
 										? 'Qui puoi verificare il tuo account e uscire senza perdere le regole già presenti nel browser.'
@@ -1289,7 +1343,8 @@ export default function App() {
 										<span>Utente collegato</span>
 										<strong>{authUser.email}</strong>
 										<p>
-											Le regole vengono sincronizzate sul tuo account. I movimenti non vengono salvati nel backend.
+											Le regole vengono sincronizzate sul tuo account. I
+											movimenti non vengono salvati nel backend.
 										</p>
 									</div>
 									<div className="inline-actions">
@@ -1314,7 +1369,9 @@ export default function App() {
 									<div className="inline-actions inline-actions--compact">
 										<button
 											className={`button ${
-												authMode === 'login' ? 'button--primary is-active' : 'button--secondary'
+												authMode === 'login'
+													? 'button--primary is-active'
+													: 'button--secondary'
 											}`}
 											onClick={() => navigateToPage('auth', 'login')}
 											type="button"
@@ -1323,7 +1380,9 @@ export default function App() {
 										</button>
 										<button
 											className={`button ${
-												authMode === 'signup' ? 'button--primary is-active' : 'button--secondary'
+												authMode === 'signup'
+													? 'button--primary is-active'
+													: 'button--secondary'
 											}`}
 											onClick={() => navigateToPage('auth', 'signup')}
 											type="button"
@@ -1332,7 +1391,10 @@ export default function App() {
 										</button>
 									</div>
 
-									<form className="editor-form auth-form" onSubmit={handleAuthSubmit}>
+									<form
+										className="editor-form auth-form"
+										onSubmit={handleAuthSubmit}
+									>
 										<label>
 											<span>Email</span>
 											<input
@@ -1345,9 +1407,15 @@ export default function App() {
 										<label>
 											<span>Password</span>
 											<input
-												autoComplete={authMode === 'login' ? 'current-password' : 'new-password'}
+												autoComplete={
+													authMode === 'login'
+														? 'current-password'
+														: 'new-password'
+												}
 												minLength={8}
-												onChange={(event) => setAuthPassword(event.target.value)}
+												onChange={(event) =>
+													setAuthPassword(event.target.value)
+												}
 												type="password"
 												value={authPassword}
 											/>
@@ -1368,7 +1436,9 @@ export default function App() {
 									</form>
 
 									<p className="auth-note">
-										Se accedi, sincronizzi solo le regole. Se resti anonimo, le regole restano nel browser e i movimenti non vengono salvati da nessuna parte.
+										Se accedi, sincronizzi solo le regole. Se resti anonimo, le
+										regole restano nel browser e i movimenti non vengono salvati
+										da nessuna parte.
 									</p>
 								</>
 							)}
@@ -1378,7 +1448,8 @@ export default function App() {
 							<div className="panel-heading">
 								<h2>Come funziona davvero</h2>
 								<p>
-									Questo era il mio punto 1: distinguere in modo chiaro ciò che è locale, ciò che si sincronizza e ciò che resta temporaneo.
+									Questo era il mio punto 1: distinguere in modo chiaro ciò che
+									è locale, ciò che si sincronizza e ciò che resta temporaneo.
 								</p>
 							</div>
 
@@ -1387,21 +1458,24 @@ export default function App() {
 									<span>Browser locale</span>
 									<strong>Regole anonime</strong>
 									<p>
-										Se non fai login, le regole vivono solo su questo dispositivo e restano disponibili anche dopo il logout.
+										Se non fai login, le regole vivono solo su questo
+										dispositivo e restano disponibili anche dopo il logout.
 									</p>
 								</div>
 								<div className="status-card status-card--account">
 									<span>Account</span>
 									<strong>Regole sincronizzate</strong>
 									<p>
-										Con login o sign up, le regole vengono portate sull’account e tornano disponibili sugli altri dispositivi.
+										Con login o sign up, le regole vengono portate sull’account
+										e tornano disponibili sugli altri dispositivi.
 									</p>
 								</div>
 								<div className="status-card status-card--session">
 									<span>Sessione corrente</span>
 									<strong>Movimenti temporanei</strong>
 									<p>
-										Lo storico importato non viene archiviato: serve solo alla sessione corrente e si azzera con reset o refresh.
+										Lo storico importato non viene archiviato: serve solo alla
+										sessione corrente e si azzera con reset o refresh.
 									</p>
 								</div>
 							</div>
@@ -1566,8 +1640,8 @@ export default function App() {
 									<h2>Correzione manuale</h2>
 									<p>
 										Clicca il merchant letto in tabella per aprire la modale di
-										correzione. Puoi selezionare piu righe e verificare subito il
-										match residuo della regola.
+										correzione. Puoi selezionare piu righe e verificare subito
+										il match residuo della regola.
 									</p>
 								</div>
 								<div className="correction-summary">
@@ -1575,12 +1649,21 @@ export default function App() {
 										<div className="scenario-card">
 											<span>Righe selezionate</span>
 											<strong>{selectedTransactionIds.length}</strong>
-											<small>Usa le checkbox per selezione multipla anche tra pagine diverse.</small>
+											<small>
+												Usa le checkbox per selezione multipla anche tra pagine
+												diverse.
+											</small>
 										</div>
 										<div className="scenario-card">
 											<span>Merchant in focus</span>
-											<strong>{selectedTransaction?.normalizedDescription || 'Nessuno'}</strong>
-											<small>Il click sul merchant letto apre la modale e include automaticamente quella riga.</small>
+											<strong>
+												{selectedTransaction?.normalizedDescription ||
+													'Nessuno'}
+											</strong>
+											<small>
+												Il click sul merchant letto apre la modale e include
+												automaticamente quella riga.
+											</small>
 										</div>
 									</div>
 									<div className="inline-actions">
@@ -1588,7 +1671,8 @@ export default function App() {
 											className="button button--primary"
 											disabled={!selectedTransactionIds.length}
 											onClick={() => {
-												const transactionInFocus = selectedTransaction ?? selectedTransactions[0];
+												const transactionInFocus =
+													selectedTransaction ?? selectedTransactions[0];
 												if (transactionInFocus) {
 													openCorrectionModal(transactionInFocus);
 												}
@@ -1616,11 +1700,14 @@ export default function App() {
 									</div>
 									{selectedTransactionIds.length ? (
 										<p className="inline-note">
-											La modale mostrerà su quante delle {selectedTransactionIds.length} righe selezionate la regola corrente continua a fare match.
+											La modale mostrerà su quante delle{' '}
+											{selectedTransactionIds.length} righe selezionate la
+											regola corrente continua a fare match.
 										</p>
 									) : (
 										<p className="empty-state">
-											Seleziona una o più righe e clicca il merchant letto in tabella per correggerle in modale.
+											Seleziona una o più righe e clicca il merchant letto in
+											tabella per correggerle in modale.
 										</p>
 									)}
 								</div>
@@ -1718,7 +1805,11 @@ export default function App() {
 																y1={y}
 																y2={y}
 															/>
-															<text className="trend-chart__ylabel" x="4" y={y + 4}>
+															<text
+																className="trend-chart__ylabel"
+																x="4"
+																y={y + 4}
+															>
 																{formatAmount(tick)}
 															</text>
 														</g>
@@ -1867,23 +1958,24 @@ export default function App() {
 										Ancora nessuna spesa discrezionale rilevata nelle categorie
 										comprimibili del mese corrente.
 									</p>
-							)}
-						</article>
+								)}
+							</article>
 
-						<article className="panel insight-panel">
-							<div className="panel-heading">
+							<article className="panel insight-panel">
+								<div className="panel-heading">
 									<h2>Spese fisse mensili</h2>
 									<p>
-										Spese ricorrenti rilevate automaticamente (mensili, bimestrali o
-										trimestrali) con importo stabile. Puoi escludere o includere
-										manualmente ogni voce.
+										Spese ricorrenti rilevate automaticamente (mensili,
+										bimestrali o trimestrali) con importo stabile. Puoi
+										escludere o includere manualmente ogni voce.
 									</p>
-							</div>
-							{fixedExpensesSummary.included.length ? (
+								</div>
+								{fixedExpensesSummary.included.length ? (
 									<div className="bar-list">
 										{fixedExpensesSummary.included.map((entry) => {
 											const maxValue =
-												fixedExpensesSummary.included[0]?.monthlyEquivalent ?? 1;
+												fixedExpensesSummary.included[0]?.monthlyEquivalent ??
+												1;
 											const width = Math.max(
 												(entry.monthlyEquivalent / maxValue) * 100,
 												8
@@ -1913,7 +2005,9 @@ export default function App() {
 													<button
 														type="button"
 														className="button button--secondary"
-														onClick={() => handleExcludeFixedExpense(entry.merchant)}
+														onClick={() =>
+															handleExcludeFixedExpense(entry.merchant)
+														}
 													>
 														Escludi
 													</button>
@@ -1923,17 +2017,20 @@ export default function App() {
 										<div className="bar-row bar-row--total">
 											<div className="bar-row__topline">
 												<span>Totale spese fisse mensili</span>
-												<strong>{formatAmount(fixedExpensesSummary.total)}</strong>
+												<strong>
+													{formatAmount(fixedExpensesSummary.total)}
+												</strong>
 											</div>
 										</div>
 									</div>
-							) : (
+								) : (
 									<p className="empty-state">
-										Nessuna spesa fissa rilevata automaticamente. Puoi aggiungerne
-										una manualmente qui sotto se importi più mesi di movimenti.
+										Nessuna spesa fissa rilevata automaticamente. Puoi
+										aggiungerne una manualmente qui sotto se importi più mesi di
+										movimenti.
 									</p>
-							)}
-							{fixedExpensesSummary.excluded.length ? (
+								)}
+								{fixedExpensesSummary.excluded.length ? (
 									<div className="fixed-expenses-excluded">
 										<h3>Escluse manualmente</h3>
 										<div className="bar-list">
@@ -1948,7 +2045,9 @@ export default function App() {
 													<button
 														type="button"
 														className="button button--secondary"
-														onClick={() => handleResetFixedExpenseOverride(entry.merchant)}
+														onClick={() =>
+															handleResetFixedExpenseOverride(entry.merchant)
+														}
 													>
 														Includi di nuovo
 													</button>
@@ -1956,8 +2055,8 @@ export default function App() {
 											))}
 										</div>
 									</div>
-							) : null}
-							{fixedExpensesSummary.addableMerchants.length ? (
+								) : null}
+								{fixedExpensesSummary.addableMerchants.length ? (
 									<form
 										className="fixed-expenses-add-form"
 										onSubmit={handleAddFixedExpense}
@@ -1987,16 +2086,17 @@ export default function App() {
 											Aggiungi
 										</button>
 									</form>
-							) : null}
-						</article>
-					</section>
+								) : null}
+							</article>
+						</section>
 
 						<article className="panel liquidity-panel">
 							<div className="panel-heading panel-heading--inline">
 								<div>
 									<h2>Confronto spesa selezionata e risparmio mensile</h2>
 									<p>
-										Barre mensili: uscite filtrate per merchant e categoria. Linea: risparmio netto mensile, positivo o negativo.
+										Barre mensili: uscite filtrate per merchant e categoria.
+										Linea: risparmio netto mensile, positivo o negativo.
 									</p>
 								</div>
 								<span className="chip">{liquidityFilterSummary}</span>
@@ -2013,7 +2113,10 @@ export default function App() {
 														const nextValue = event.target.value;
 														setAnalyticsStartMonth(nextValue);
 
-														if (analyticsRangeEnd && analyticsRangeEnd < nextValue) {
+														if (
+															analyticsRangeEnd &&
+															analyticsRangeEnd < nextValue
+														) {
 															setAnalyticsEndMonth(nextValue);
 														}
 													}}
@@ -2033,7 +2136,10 @@ export default function App() {
 														const nextValue = event.target.value;
 														setAnalyticsEndMonth(nextValue);
 
-														if (analyticsRangeStart && analyticsRangeStart > nextValue) {
+														if (
+															analyticsRangeStart &&
+															analyticsRangeStart > nextValue
+														) {
 															setAnalyticsStartMonth(nextValue);
 														}
 													}}
@@ -2049,7 +2155,9 @@ export default function App() {
 											<SearchableMultiSelect
 												emptyMessage="Nessuna categoria trovata per questa ricerca."
 												label="Categorie"
-												onClearSelection={() => setSelectedAnalyticsCategories([])}
+												onClearSelection={() =>
+													setSelectedAnalyticsCategories([])
+												}
 												onToggleValue={(nextValue) =>
 													setSelectedAnalyticsCategories((currentValues) =>
 														toggleSelection(currentValues, nextValue)
@@ -2070,7 +2178,9 @@ export default function App() {
 											<SearchableMultiSelect
 												emptyMessage="Nessun merchant trovato per questa ricerca."
 												label="Merchant"
-												onClearSelection={() => setSelectedAnalyticsMerchants([])}
+												onClearSelection={() =>
+													setSelectedAnalyticsMerchants([])
+												}
 												onToggleValue={(nextValue) =>
 													setSelectedAnalyticsMerchants((currentValues) =>
 														toggleSelection(currentValues, nextValue)
@@ -2088,7 +2198,11 @@ export default function App() {
 													'merchant selezionati'
 												)}
 											/>
-											<button className="button button--secondary analytics-controls__reset" onClick={resetAnalyticsFilters} type="button">
+											<button
+												className="button button--secondary analytics-controls__reset"
+												onClick={resetAnalyticsFilters}
+												type="button"
+											>
 												Reset grafico
 											</button>
 										</div>
@@ -2097,73 +2211,101 @@ export default function App() {
 									<div className="liquidity-summary-grid">
 										<div className="scenario-card">
 											<span>Uscite filtrate</span>
-											<strong>{formatAmount(liquidityFilteredSpendTotal)}</strong>
-											<small>Totale sul periodo e sui filtri selezionati.</small>
+											<strong>
+												{formatAmount(liquidityFilteredSpendTotal)}
+											</strong>
+											<small>
+												Totale sul periodo e sui filtri selezionati.
+											</small>
 										</div>
 										<div className="scenario-card">
 											<span>Risparmio medio mensile</span>
 											<strong>{formatAmount(liquidityAverageSavings)}</strong>
-											<small>Valore netto mensile medio, positivo o negativo.</small>
+											<small>
+												Valore netto mensile medio, positivo o negativo.
+											</small>
 										</div>
 										<div className="scenario-card">
 											<span>
-												Spesa selezionata {currentLiquidityMonth ? formatMonth(currentLiquidityMonth.month) : 'mese corrente'}
+												Spesa selezionata{' '}
+												{currentLiquidityMonth
+													? formatMonth(currentLiquidityMonth.month)
+													: 'mese corrente'}
 											</span>
 											<strong>{formatAmount(currentSelectedSpend)}</strong>
 											<small>
 												{selectedSpendDelta !== null && previousLiquidityMonth
 													? describeMonthComparison(
-														selectedSpendDelta,
-														previousLiquidityMonth.month,
-														'expense'
+															selectedSpendDelta,
+															previousLiquidityMonth.month,
+															'expense'
 													  )
 													: 'Serve almeno un mese precedente nel range per il confronto.'}
 											</small>
 										</div>
 										<div className="scenario-card">
 											<span>
-												Risparmio netto {currentLiquidityMonth ? formatMonth(currentLiquidityMonth.month) : 'mese corrente'}
+												Risparmio netto{' '}
+												{currentLiquidityMonth
+													? formatMonth(currentLiquidityMonth.month)
+													: 'mese corrente'}
 											</span>
-											<strong>{formatAmount(currentLiquidityMonth?.savings ?? 0)}</strong>
+											<strong>
+												{formatAmount(currentLiquidityMonth?.savings ?? 0)}
+											</strong>
 											<small>
 												{savingsDelta !== null && previousLiquidityMonth
 													? describeMonthComparison(
-														savingsDelta,
-														previousLiquidityMonth.month,
-														'savings'
+															savingsDelta,
+															previousLiquidityMonth.month,
+															'savings'
 													  )
 													: 'Serve almeno un mese precedente nel range per il confronto.'}
 											</small>
 										</div>
 										<div className="scenario-card">
 											<span>Mesi con cashflow positivo</span>
-											<strong>{positiveSavingsMonths}/{liquidityChartSeries.length}</strong>
-											<small>Numero di mesi con entrate superiori alle uscite nel periodo selezionato.</small>
+											<strong>
+												{positiveSavingsMonths}/{liquidityChartSeries.length}
+											</strong>
+											<small>
+												Numero di mesi con entrate superiori alle uscite nel
+												periodo selezionato.
+											</small>
 										</div>
 									</div>
 
 									<div className="analytics-recurring">
 										<div>
-											<span className="analytics-chip-group__label">Merchant ricorrenti comprimibili</span>
+											<span className="analytics-chip-group__label">
+												Merchant ricorrenti comprimibili
+											</span>
 											<p>
-												Merchant presenti in almeno due mesi nelle categorie comprimibili del range selezionato.
+												Merchant presenti in almeno due mesi nelle categorie
+												comprimibili del range selezionato.
 											</p>
 										</div>
 										{recurringMerchantInsights.length ? (
 											<div className="analytics-recurring__list">
 												{recurringMerchantInsights.map((merchantInsight) => (
-													<article className="analytics-recurring__card" key={merchantInsight.merchant}>
+													<article
+														className="analytics-recurring__card"
+														key={merchantInsight.merchant}
+													>
 														<strong>{merchantInsight.merchant}</strong>
 														<span>{formatAmount(merchantInsight.total)}</span>
 														<small>
-															{merchantInsight.activeMonths} mesi attivi • media {formatAmount(merchantInsight.averageMonthly)}/mese
+															{merchantInsight.activeMonths} mesi attivi • media{' '}
+															{formatAmount(merchantInsight.averageMonthly)}
+															/mese
 														</small>
 													</article>
 												))}
 											</div>
 										) : (
 											<p className="empty-state">
-												Nessun merchant ricorrente comprimibile nel range o nei filtri selezionati.
+												Nessun merchant ricorrente comprimibile nel range o nei
+												filtri selezionati.
 											</p>
 										)}
 									</div>
@@ -2172,27 +2314,42 @@ export default function App() {
 										<div className="liquidity-chart">
 											<div className="analytics-legend">
 												<span>
-													<i className="analytics-legend__bar" /> Spesa mensile selezionata
+													<i className="analytics-legend__bar" /> Spesa mensile
+													selezionata
 												</span>
 												<span>
-													<i className="analytics-legend__line" /> Risparmio mensile netto
+													<i className="analytics-legend__line" /> Risparmio
+													mensile netto
 												</span>
 											</div>
 											<div className="liquidity-chart__canvas">
-												<svg aria-hidden="true" viewBox={`0 0 ${LIQUIDITY_CHART_WIDTH} ${LIQUIDITY_CHART_HEIGHT}`}>
+												<svg
+													aria-hidden="true"
+													viewBox={`0 0 ${LIQUIDITY_CHART_WIDTH} ${LIQUIDITY_CHART_HEIGHT}`}
+												>
 													{liquidityChartScale.ticks.map((tick) => {
-														const y = getChartY(tick, liquidityChartScale, LIQUIDITY_CHART_HEIGHT);
+														const y = getChartY(
+															tick,
+															liquidityChartScale,
+															LIQUIDITY_CHART_HEIGHT
+														);
 
 														return (
 															<g key={tick}>
 																<line
 																	className="liquidity-chart__gridline"
 																	x1={chartPadding.left}
-																	x2={LIQUIDITY_CHART_WIDTH - chartPadding.right}
+																	x2={
+																		LIQUIDITY_CHART_WIDTH - chartPadding.right
+																	}
 																	y1={y}
 																	y2={y}
 																/>
-																<text className="liquidity-chart__ylabel" x="4" y={y + 4}>
+																<text
+																	className="liquidity-chart__ylabel"
+																	x="4"
+																	y={y + 4}
+																>
 																	{formatAmount(tick)}
 																</text>
 															</g>
@@ -2206,16 +2363,27 @@ export default function App() {
 														y2={liquidityZeroY}
 													/>
 													{liquidityChartSeries.map((point, index) => {
-														const x = getChartX(index, liquidityChartSeries.length, LIQUIDITY_CHART_WIDTH);
+														const x = getChartX(
+															index,
+															liquidityChartSeries.length,
+															LIQUIDITY_CHART_WIDTH
+														);
 														const barWidth = Math.max(
 															18,
 															Math.min(
-																((LIQUIDITY_CHART_WIDTH - chartPadding.left - chartPadding.right) /
-																	Math.max(liquidityChartSeries.length, 1)) * 0.48,
+																((LIQUIDITY_CHART_WIDTH -
+																	chartPadding.left -
+																	chartPadding.right) /
+																	Math.max(liquidityChartSeries.length, 1)) *
+																	0.48,
 																48
 															)
 														);
-														const spendY = getChartY(point.filteredSpend, liquidityChartScale, LIQUIDITY_CHART_HEIGHT);
+														const spendY = getChartY(
+															point.filteredSpend,
+															liquidityChartScale,
+															LIQUIDITY_CHART_HEIGHT
+														);
 														const barHeight = Math.abs(spendY - liquidityZeroY);
 
 														return (
@@ -2230,15 +2398,38 @@ export default function App() {
 															/>
 														);
 													})}
-													<polyline className="liquidity-chart__line" points={liquiditySavingsPoints} />
+													<polyline
+														className="liquidity-chart__line"
+														points={liquiditySavingsPoints}
+													/>
 													{liquidityChartSeries.map((point, index) => {
-														const x = getChartX(index, liquidityChartSeries.length, LIQUIDITY_CHART_WIDTH);
-														const y = getChartY(point.savings, liquidityChartScale, LIQUIDITY_CHART_HEIGHT);
+														const x = getChartX(
+															index,
+															liquidityChartSeries.length,
+															LIQUIDITY_CHART_WIDTH
+														);
+														const y = getChartY(
+															point.savings,
+															liquidityChartScale,
+															LIQUIDITY_CHART_HEIGHT
+														);
 
-														return <circle className="liquidity-chart__dot" cx={x} cy={y} key={`${point.month}-dot`} r="4" />;
+														return (
+															<circle
+																className="liquidity-chart__dot"
+																cx={x}
+																cy={y}
+																key={`${point.month}-dot`}
+																r="4"
+															/>
+														);
 													})}
 													{liquidityChartSeries.map((point, index) => {
-														const x = getChartX(index, liquidityChartSeries.length, LIQUIDITY_CHART_WIDTH);
+														const x = getChartX(
+															index,
+															liquidityChartSeries.length,
+															LIQUIDITY_CHART_WIDTH
+														);
 
 														return (
 															<text
@@ -2256,11 +2447,16 @@ export default function App() {
 											</div>
 										</div>
 									) : (
-										<p className="empty-state">Nessun mese disponibile per il range selezionato.</p>
+										<p className="empty-state">
+											Nessun mese disponibile per il range selezionato.
+										</p>
 									)}
 								</div>
 							) : (
-								<p className="empty-state">Importa un CSV per attivare il confronto mensile tra spesa selezionata e risparmio.</p>
+								<p className="empty-state">
+									Importa un CSV per attivare il confronto mensile tra spesa
+									selezionata e risparmio.
+								</p>
 							)}
 						</article>
 
@@ -2390,27 +2586,31 @@ export default function App() {
 																: ''
 														}
 														key={transaction.id}
-														onClick={() => applySelection(transaction)}
 													>
 														<td>
 															<input
-																checked={selectedTransactionIds.includes(transaction.id)}
-																onChange={() => toggleTransactionSelection(transaction.id)}
+																checked={selectedTransactionIds.includes(
+																	transaction.id
+																)}
+																onChange={() =>
+																	toggleTransactionSelection(transaction.id)
+																}
 																onClick={(event) => event.stopPropagation()}
 																type="checkbox"
 															/>
 														</td>
-														<td>
-															{formatDate(transaction.date)}
-														</td>
-														<td>
+														<td>{formatDate(transaction.date)}</td>
+														<td
+															className="cell-original-description"
+															onClick={() => applySelection(transaction)}
+														>
 															<div className="cell-stack">
 																<strong>
 																	{transaction.originalDescription}
 																</strong>
 															</div>
 														</td>
-														<td>
+														<td className="cell-merchant">
 															<button
 																className="table-link"
 																onClick={(event) => {
@@ -2630,8 +2830,10 @@ export default function App() {
 
 								{selectedRule ? (
 									<p className="inline-note">
-										Stai modificando una regola {selectedRule.source === 'default' ? 'default' : 'custom'}.
-										La priorita piu alta vince quando piu regole matchano la stessa riga.
+										Stai modificando una regola{' '}
+										{selectedRule.source === 'default' ? 'default' : 'custom'}.
+										La priorita piú alta vince quando piu regole matchano la
+										stessa riga.
 									</p>
 								) : null}
 
@@ -2668,8 +2870,8 @@ export default function App() {
 								<div>
 									<h2>Libreria regole</h2>
 									<p>
-										Vista effettiva: include regole default, override, priorita e
-										regole custom.
+										Vista effettiva: include regole default, override, priorita
+										e regole custom.
 									</p>
 								</div>
 								<span className="chip">
@@ -2730,8 +2932,9 @@ export default function App() {
 							<div>
 								<h2>Correzione manuale multi-riga</h2>
 								<p>
-									Aggiorni merchant e categoria delle righe selezionate. Se salvi
-									anche una regola, vedi subito quante continuano a matchare.
+									Aggiorni merchant e categoria delle righe selezionate. Se
+									salvi anche una regola, vedi subito quante continuano a
+									matchare.
 								</p>
 							</div>
 							<button
@@ -2847,7 +3050,9 @@ export default function App() {
 
 							{saveAsRule ? (
 								<p className="inline-note">
-									Con questa configurazione la regola continua a matchare {manualRulePreviewCount} righe su {selectedTransactions.length} selezionate.
+									Con questa configurazione la regola continua a matchare{' '}
+									{manualRulePreviewCount} righe su{' '}
+									{selectedTransactions.length} selezionate.
 								</p>
 							) : null}
 
@@ -2857,7 +3062,9 @@ export default function App() {
 									disabled={isSaving}
 									type="submit"
 								>
-									{isSaving ? 'Salvataggio...' : 'Applica alle righe selezionate'}
+									{isSaving
+										? 'Salvataggio...'
+										: 'Applica alle righe selezionate'}
 								</button>
 								<button
 									className="button button--secondary"
