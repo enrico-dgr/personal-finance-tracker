@@ -758,6 +758,30 @@ p {
   background: linear-gradient(90deg, #b4642b 0%, #d99a63 100%);
 }
 
+.bar-row--total {
+  border-top: 1px dashed rgba(31, 41, 51, 0.2);
+  padding-top: 0.6rem;
+  font-weight: 600;
+}
+
+.fixed-expenses-excluded {
+  margin-top: 1rem;
+}
+
+.fixed-expenses-excluded h3 {
+  font-size: 0.9rem;
+  color: rgba(31, 41, 51, 0.64);
+  margin-bottom: 0.5rem;
+}
+
+.fixed-expenses-add-form {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
 .timeline-item {
   padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--line-soft);

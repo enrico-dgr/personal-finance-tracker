@@ -1,7 +1,9 @@
 import type { MerchantRule } from './api';
+import type { FixedExpenseOverrideState } from './fixedExpenses';
 
 const LOCAL_RULES_KEY = 'finance-tracker.local-rules';
 const AUTH_TOKEN_KEY = 'finance-tracker.auth-token';
+const FIXED_EXPENSE_OVERRIDES_KEY = 'finance-tracker.fixed-expense-overrides';
 
 export function loadLocalRules() {
   if (typeof window === 'undefined') {
@@ -61,6 +63,46 @@ export function clearStoredAuthToken() {
 
 export function buildLocalRuleId() {
   return `local-${crypto.randomUUID()}`;
+}
+
+export function loadFixedExpenseOverrides() {
+  if (typeof window === 'undefined') {
+    return {} as Record<string, FixedExpenseOverrideState>;
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(FIXED_EXPENSE_OVERRIDES_KEY);
+
+    if (!rawValue) {
+      return {} as Record<string, FixedExpenseOverrideState>;
+    }
+
+    const parsedValue = JSON.parse(rawValue) as unknown;
+
+    if (!parsedValue || typeof parsedValue !== 'object' || Array.isArray(parsedValue)) {
+      return {} as Record<string, FixedExpenseOverrideState>;
+    }
+
+    const overrides: Record<string, FixedExpenseOverrideState> = {};
+
+    for (const [merchant, state] of Object.entries(parsedValue as Record<string, unknown>)) {
+      if (state === 'included' || state === 'excluded') {
+        overrides[merchant] = state;
+      }
+    }
+
+    return overrides;
+  } catch {
+    return {} as Record<string, FixedExpenseOverrideState>;
+  }
+}
+
+export function saveFixedExpenseOverrides(overrides: Record<string, FixedExpenseOverrideState>) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(FIXED_EXPENSE_OVERRIDES_KEY, JSON.stringify(overrides));
 }
 
 function isMerchantRuleLike(value: unknown): value is MerchantRule {

@@ -9,6 +9,7 @@
 - Arricchire la nuova area account con metadati profilo, ultimo sync regole e azioni self-service essenziali.
 - Misurare l'efficacia della nuova correzione multi-riga con preview match per capire dove servono ulteriori scorciatoie operative.
 - Valutare un toggle chiaro tra barre mensili e linea cumulativa per la spesa selezionata, se serve una lettura più finanziaria del trend.
+- Verificare sui dati reali se le soglie di auto-detection delle spese fisse (stabilità importo, regolarità cadenza) sono troppo strette o troppo larghe.
 
 ## NEXT
 - Droppare la tabella `Transaction` alla prossima migrazione Prisma pianificata, se resta inutilizzata (ADR-0003).
@@ -22,7 +23,6 @@
 
 ## LATER
 - Budget per categoria.
-- Spese ricorrenti.
 - Multi-account.
 - Integrazione con API bancarie o PSD2.
 - Export dei dati puliti per analisi esterne.

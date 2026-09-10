@@ -26,8 +26,10 @@ import {
 } from './api';
 import {
 	clearStoredAuthToken,
+	loadFixedExpenseOverrides,
 	loadLocalRules,
 	loadStoredAuthToken,
+	saveFixedExpenseOverrides,
 	saveLocalRules,
 	saveStoredAuthToken,
 } from './browserStorage';
@@ -42,15 +44,22 @@ import {
 	getChartY,
 } from './dashboardAnalytics';
 import {
+	buildFixedExpenseCandidates,
+	summarizeFixedExpenses,
+	type FixedExpenseOverrideState,
+} from './fixedExpenses';
+import {
 	buildEffectiveRuleLibrary,
 	buildRulePayloadFromEffectiveRule,
 	countMatchingTransactions,
+	reclassifyTransactions,
 	type EffectiveMerchantRule,
 } from './ruleLibrary';
 import { buildSessionStats } from './sessionStats';
 
 import { SearchableMultiSelect } from './components/SearchableMultiSelect';
 import {
+	describeFixedExpenseCadence,
 	describeMonthComparison,
 	formatAmount,
 	formatDate,
@@ -138,6 +147,10 @@ export default function App() {
 	const [analyticsStartMonth, setAnalyticsStartMonth] = useState('');
 	const [analyticsEndMonth, setAnalyticsEndMonth] = useState('');
 	const [analyticsFilterResetVersion, setAnalyticsFilterResetVersion] = useState(0);
+	const [fixedExpenseOverrides, setFixedExpenseOverrides] = useState<
+		Record<string, FixedExpenseOverrideState>
+	>(() => loadFixedExpenseOverrides());
+	const [fixedExpenseAddSelection, setFixedExpenseAddSelection] = useState('');
 	const [isPending, startTransition] = useTransition();
 	const userMenuRef = useRef<HTMLDivElement | null>(null);
 
@@ -146,6 +159,11 @@ export default function App() {
 	const isAuthPage = activePage === 'auth';
 	const effectiveRules = buildEffectiveRuleLibrary(defaultRules, rules);
 	const stats = buildSessionStats(transactions, effectiveRules.length);
+	const fixedExpenseCandidates = buildFixedExpenseCandidates(transactions);
+	const fixedExpensesSummary = summarizeFixedExpenses(
+		fixedExpenseCandidates,
+		fixedExpenseOverrides
+	);
 	const chartPadding = getChartPadding();
 	const monthOptions = [
 		...new Set(transactions.map((transaction) => transaction.date.slice(0, 7))),
@@ -703,7 +721,7 @@ export default function App() {
 		try {
 			const timestamp = new Date().toISOString();
 			const selectedIds = new Set(selectedTransactionIds);
-			const nextTransactions = transactions.map((transaction) =>
+			let nextTransactions = transactions.map((transaction) =>
 				selectedIds.has(transaction.id)
 					? {
 							...transaction,
@@ -713,11 +731,10 @@ export default function App() {
 					  }
 					: transaction
 			);
-
-			setTransactions(nextTransactions);
+			let reclassifiedCount = 0;
 
 			if (saveAsRule) {
-				await persistRule({
+				const savedRule = await persistRule({
 					pattern: rulePattern.trim() || normalizedDescription.trim(),
 					patternType: rulePatternType,
 					normalizedName: normalizedDescription.trim(),
@@ -725,15 +742,32 @@ export default function App() {
 					priority: rulePriority,
 					isDisabled: false,
 				});
+				const nextEffectiveRules = buildEffectiveRuleLibrary(
+					defaultRules,
+					mergeRuleCollection(rules, savedRule)
+				);
+				const reclassifyResult = reclassifyTransactions(
+					nextTransactions,
+					nextEffectiveRules
+				);
+
+				nextTransactions = reclassifyResult.transactions;
+				reclassifiedCount = reclassifyResult.changedCount;
 			}
 
+			setTransactions(nextTransactions);
 			setIsCorrectionModalOpen(false);
+
+			const otherRowsNote =
+				reclassifiedCount > 0
+					? ` Altri ${reclassifiedCount} movimenti in sessione sono stati aggiornati con la stessa regola.`
+					: '';
 
 			setStatusMessage(
 				saveAsRule
 					? isAuthenticated
-						? `Aggiornate ${selectedTransactions.length} righe. Regola sincronizzata sul tuo account e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.`
-						: `Aggiornate ${selectedTransactions.length} righe. Regola salvata nel browser e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.`
+						? `Aggiornate ${selectedTransactions.length} righe. Regola sincronizzata sul tuo account e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.${otherRowsNote}`
+						: `Aggiornate ${selectedTransactions.length} righe. Regola salvata nel browser e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.${otherRowsNote}`
 					: `Aggiornate ${selectedTransactions.length} righe solo nella sessione corrente.`
 			);
 		} catch (error) {
@@ -781,6 +815,12 @@ export default function App() {
 				defaultRules,
 				mergeRuleCollection(rules, savedRule)
 			);
+			const { transactions: reclassifiedTransactions, changedCount } =
+				reclassifyTransactions(transactions, nextEffectiveRules);
+
+			if (changedCount > 0) {
+				setTransactions(reclassifiedTransactions);
+			}
 
 			populateRuleEditor(
 				nextEffectiveRules.find((rule) =>
@@ -788,9 +828,15 @@ export default function App() {
 				) ?? null
 			);
 			setStatusMessage(
-				isAuthenticated
-					? 'Regola sincronizzata con il tuo account.'
-					: 'Regola salvata nel browser.'
+				`${
+					isAuthenticated
+						? 'Regola sincronizzata con il tuo account.'
+						: 'Regola salvata nel browser.'
+				}${
+					changedCount > 0
+						? ` ${changedCount} movimenti in sessione sono stati aggiornati.`
+						: ''
+				}`
 			);
 		} catch (error) {
 			setErrorMessage(
@@ -842,12 +888,28 @@ export default function App() {
 			setRules(nextRules);
 			saveLocalRules(nextRules);
 			populateRuleEditor(null);
+
+			const nextEffectiveRules = buildEffectiveRuleLibrary(defaultRules, nextRules);
+			const { transactions: reclassifiedTransactions, changedCount } =
+				reclassifyTransactions(transactions, nextEffectiveRules);
+
+			if (changedCount > 0) {
+				setTransactions(reclassifiedTransactions);
+			}
+
+			const reclassifyNote =
+				changedCount > 0
+					? ` ${changedCount} movimenti in sessione sono stati aggiornati.`
+					: '';
+
 			setStatusMessage(
-				selectedRule.source === 'default'
-					? 'Regola default disattivata nella tua libreria.'
-					: isAuthenticated
-					? 'Regola eliminata dal tuo account.'
-					: 'Regola eliminata dal browser.'
+				`${
+					selectedRule.source === 'default'
+						? 'Regola default disattivata nella tua libreria.'
+						: isAuthenticated
+						? 'Regola eliminata dal tuo account.'
+						: 'Regola eliminata dal browser.'
+				}${reclassifyNote}`
 			);
 		} catch (error) {
 			setErrorMessage(
@@ -901,6 +963,45 @@ export default function App() {
 		} finally {
 			setIsAuthSubmitting(false);
 		}
+	}
+
+	function handleExcludeFixedExpense(merchant: string) {
+		const nextOverrides: Record<string, FixedExpenseOverrideState> = {
+			...fixedExpenseOverrides,
+			[merchant]: 'excluded',
+		};
+
+		setFixedExpenseOverrides(nextOverrides);
+		saveFixedExpenseOverrides(nextOverrides);
+	}
+
+	function handleIncludeFixedExpense(merchant: string) {
+		const nextOverrides: Record<string, FixedExpenseOverrideState> = {
+			...fixedExpenseOverrides,
+			[merchant]: 'included',
+		};
+
+		setFixedExpenseOverrides(nextOverrides);
+		saveFixedExpenseOverrides(nextOverrides);
+	}
+
+	function handleResetFixedExpenseOverride(merchant: string) {
+		const nextOverrides = { ...fixedExpenseOverrides };
+
+		delete nextOverrides[merchant];
+		setFixedExpenseOverrides(nextOverrides);
+		saveFixedExpenseOverrides(nextOverrides);
+	}
+
+	function handleAddFixedExpense(event: FormEvent) {
+		event.preventDefault();
+
+		if (!fixedExpenseAddSelection) {
+			return;
+		}
+
+		handleIncludeFixedExpense(fixedExpenseAddSelection);
+		setFixedExpenseAddSelection('');
 	}
 
 	function handleLogout() {
@@ -1766,9 +1867,129 @@ export default function App() {
 										Ancora nessuna spesa discrezionale rilevata nelle categorie
 										comprimibili del mese corrente.
 									</p>
-								)}
-							</article>
-						</section>
+							)}
+						</article>
+
+						<article className="panel insight-panel">
+							<div className="panel-heading">
+									<h2>Spese fisse mensili</h2>
+									<p>
+										Spese ricorrenti rilevate automaticamente (mensili, bimestrali o
+										trimestrali) con importo stabile. Puoi escludere o includere
+										manualmente ogni voce.
+									</p>
+							</div>
+							{fixedExpensesSummary.included.length ? (
+									<div className="bar-list">
+										{fixedExpensesSummary.included.map((entry) => {
+											const maxValue =
+												fixedExpensesSummary.included[0]?.monthlyEquivalent ?? 1;
+											const width = Math.max(
+												(entry.monthlyEquivalent / maxValue) * 100,
+												8
+											);
+
+											return (
+												<div className="bar-row" key={entry.merchant}>
+													<div className="bar-row__topline">
+														<span>{entry.merchant}</span>
+														<strong>
+															{formatAmount(entry.monthlyEquivalent)}
+														</strong>
+													</div>
+													<div className="bar-track">
+														<div
+															className="bar-fill bar-fill--savings"
+															style={{ width: `${width}%` }}
+														/>
+													</div>
+													<small className="bar-row__meta">
+														{describeFixedExpenseCadence(
+															entry.cadence,
+															entry.cadenceMonths
+														)}{' '}
+														&middot; media su {entry.occurrenceCount} occorrenze
+													</small>
+													<button
+														type="button"
+														className="button button--secondary"
+														onClick={() => handleExcludeFixedExpense(entry.merchant)}
+													>
+														Escludi
+													</button>
+												</div>
+											);
+										})}
+										<div className="bar-row bar-row--total">
+											<div className="bar-row__topline">
+												<span>Totale spese fisse mensili</span>
+												<strong>{formatAmount(fixedExpensesSummary.total)}</strong>
+											</div>
+										</div>
+									</div>
+							) : (
+									<p className="empty-state">
+										Nessuna spesa fissa rilevata automaticamente. Puoi aggiungerne
+										una manualmente qui sotto se importi più mesi di movimenti.
+									</p>
+							)}
+							{fixedExpensesSummary.excluded.length ? (
+									<div className="fixed-expenses-excluded">
+										<h3>Escluse manualmente</h3>
+										<div className="bar-list">
+											{fixedExpensesSummary.excluded.map((entry) => (
+												<div className="bar-row" key={entry.merchant}>
+													<div className="bar-row__topline">
+														<span>{entry.merchant}</span>
+														<strong>
+															{formatAmount(entry.monthlyEquivalent)}
+														</strong>
+													</div>
+													<button
+														type="button"
+														className="button button--secondary"
+														onClick={() => handleResetFixedExpenseOverride(entry.merchant)}
+													>
+														Includi di nuovo
+													</button>
+												</div>
+											))}
+										</div>
+									</div>
+							) : null}
+							{fixedExpensesSummary.addableMerchants.length ? (
+									<form
+										className="fixed-expenses-add-form"
+										onSubmit={handleAddFixedExpense}
+									>
+										<label htmlFor="fixed-expense-add-select">
+											Aggiungi spesa fissa
+										</label>
+										<select
+											id="fixed-expense-add-select"
+											value={fixedExpenseAddSelection}
+											onChange={(event) =>
+												setFixedExpenseAddSelection(event.target.value)
+											}
+										>
+											<option value="">Seleziona un merchant</option>
+											{fixedExpensesSummary.addableMerchants.map((merchant) => (
+												<option key={merchant} value={merchant}>
+													{merchant}
+												</option>
+											))}
+										</select>
+										<button
+											type="submit"
+											className="button button--secondary"
+											disabled={!fixedExpenseAddSelection}
+										>
+											Aggiungi
+										</button>
+									</form>
+							) : null}
+						</article>
+					</section>
 
 						<article className="panel liquidity-panel">
 							<div className="panel-heading panel-heading--inline">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+	describeFixedExpenseCadence,
 	describeMonthComparison,
 	formatFilterSummary,
 	formatSelectSummary,
@@ -53,5 +54,23 @@ describe('describeMonthComparison', () => {
 
 	it('frames a negative savings delta as a regression', () => {
 		expect(describeMonthComparison(-50, '2026-03', 'savings')).toContain('peggio di');
+	});
+});
+
+describe('describeFixedExpenseCadence', () => {
+	it('labels a monthly cadence', () => {
+		expect(describeFixedExpenseCadence('monthly', 1)).toBe('mensile');
+	});
+
+	it('labels a bimonthly cadence', () => {
+		expect(describeFixedExpenseCadence('bimonthly', 2)).toBe('bimestrale');
+	});
+
+	it('labels a quarterly cadence', () => {
+		expect(describeFixedExpenseCadence('quarterly', 3)).toBe('trimestrale');
+	});
+
+	it('describes an irregular cadence with the average gap', () => {
+		expect(describeFixedExpenseCadence('irregular', 4)).toContain('ogni 4 mesi');
 	});
 });

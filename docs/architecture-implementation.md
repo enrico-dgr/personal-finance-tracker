@@ -9,7 +9,7 @@
 - `apps/api/src/lib/auth.ts`: parsing bearer token e firma token per sessioni utente; `AUTH_SECRET` è obbligatorio e il processo non parte senza.
 
 ## Frontend
-- `apps/web/src/App.tsx`: pagina applicativa con header globale sticky e menu utente, auth opzionale, bootstrap da localStorage per evitare flicker anonimi al refresh, storico di sessione, reset storico client-side, import, insight orientati al risparmio liquido, grafico full-width spesa/risparmio filtrabile, confronto mese-su-mese, libreria regole effettiva e modale di correzione manuale multi-riga.
+- `apps/web/src/App.tsx`: pagina applicativa con header globale sticky e menu utente, auth opzionale, bootstrap da localStorage per evitare flicker anonimi al refresh, storico di sessione, reset storico client-side, import, riclassificazione immediata dei movimenti dopo ogni mutazione delle regole, insight orientati al risparmio liquido, pannello spese fisse mensili con inclusione/esclusione manuale, grafico full-width spesa/risparmio filtrabile, confronto mese-su-mese, libreria regole effettiva e modale di correzione manuale multi-riga.
 - `apps/web/src/routing.ts`: navigazione hash-based tra dashboard, regole e pagina account.
 - `apps/web/src/formatters.ts`: formattazione di importi, date, mesi, riepiloghi di selezione e confronti mese-su-mese.
 - `apps/web/src/uiHelpers.ts`: layout della paginazione e toggle delle selezioni multiple.
@@ -17,11 +17,12 @@
 - `apps/web/src/useDebouncedValue.ts`: hook di debounce usato dalle select ricercabili.
 - `apps/web/src/components/SearchableMultiSelect.tsx`: select multipla con ricerca debounced, chiusura su click esterno ed Escape.
 - `apps/web/src/api.ts`: client HTTP tipizzato verso API auth, upload stateless, regole sincronizzate e default rules esposte dal backend.
-- `apps/web/src/browserStorage.ts`: persistenza locale browser per regole anonime e token auth.
-- `apps/web/src/ruleLibrary.ts`: composizione locale tra default rules e override utente, preview match su selezione e helper per payload edit/disattivazione.
+- `apps/web/src/ruleLibrary.ts`: composizione locale tra default rules e override utente, preview match su selezione, helper per payload edit/disattivazione e riclassificazione dei movimenti già importati dopo una mutazione delle regole (`reclassifyTransactions`).
 - `apps/web/src/sessionStats.ts`: calcolo locale delle statistiche di sessione, top merchant e stima di spesa discrezionale comprimibile.
 - `apps/web/src/dashboardAnalytics.ts`: helper per scala, coordinate e serie del grafico full-width con barre di spesa filtrata, linea del risparmio netto e merchant ricorrenti comprimibili.
-- `apps/web/src/styles.css`: stile responsive per dashboard, pagina account separata, header applicativo sticky, menu utente, insight grid, grafico analytics full-width, tabella paginata e modale di correzione.
+- `apps/web/src/fixedExpenses.ts`: rilevamento di spese fisse ricorrenti per merchant (cadenza mensile/bimestrale/trimestrale, stabilità dell'importo) e calcolo del riepilogo con override manuali di inclusione/esclusione.
+- `apps/web/src/browserStorage.ts`: persistenza locale browser per regole anonime, token auth e override manuali delle spese fisse.
+- `apps/web/src/styles.css`: stile responsive per dashboard, pagina account separata, header applicativo sticky, menu utente, insight grid, pannello spese fisse mensili, grafico analytics full-width, tabella paginata e modale di correzione.
 
 ## Database
 - `User`: account opzionale per sincronizzare regole tra dispositivi.
@@ -43,3 +44,5 @@
 - Smoke test browser su grafico analytics full-width con filtri merchant/categoria e reset coerente del pannello.
 - Smoke test browser su select analytics con debounce reale della ricerca e riepilogo filtri coerente.
 - Build frontend validata dopo introduzione di default rules gestibili, priorità di match e modale multi-riga.
+- Test unitari su riclassificazione automatica dei movimenti dopo creazione, modifica e disattivazione/cancellazione di una regola (`reclassifyTransactions`).
+- Test unitari sul rilevamento delle spese fisse mensili: cadenza mensile/bimestrale/trimestrale, stabilità dell'importo, auto-detection e override manuali di inclusione/esclusione (`fixedExpenses.ts`).

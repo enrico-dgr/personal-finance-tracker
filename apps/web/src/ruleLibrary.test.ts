@@ -6,6 +6,7 @@ import {
 	buildRulePayloadFromEffectiveRule,
 	countMatchingTransactions,
 	doesRuleMatchTransaction,
+	reclassifyTransactions,
 } from './ruleLibrary';
 
 function buildRule(overrides: Partial<MerchantRule> = {}): MerchantRule {
@@ -24,7 +25,10 @@ function buildRule(overrides: Partial<MerchantRule> = {}): MerchantRule {
 	};
 }
 
-function buildTransaction(originalDescription: string): Transaction {
+function buildTransaction(
+	originalDescription: string,
+	overrides: Partial<Transaction> = {}
+): Transaction {
 	return {
 		id: 'transaction-1',
 		date: '2026-04-20T00:00:00.000Z',
@@ -34,6 +38,7 @@ function buildTransaction(originalDescription: string): Transaction {
 		category: 'Other',
 		createdAt: '2026-04-20T00:00:00.000Z',
 		updatedAt: '2026-04-20T00:00:00.000Z',
+		...overrides,
 	};
 }
 
@@ -206,5 +211,91 @@ describe('countMatchingTransactions', () => {
 		]);
 
 		expect(count).toBe(2);
+	});
+});
+
+describe('reclassifyTransactions', () => {
+	it('applies a newly created rule to a transaction previously left at the fallback', () => {
+		const effectiveRules = buildEffectiveRuleLibrary(
+			[],
+			[buildRule({ id: 'custom-1', pattern: 'LIDL', normalizedName: 'LIDL', category: 'Food' })]
+		);
+		const transactions = [
+			buildTransaction('PAGAMENTO POS 1234 LIDL CATANIA', {
+				id: 'tx-1',
+				normalizedDescription: 'LIDL CATANIA',
+				category: 'Other',
+			}),
+		];
+
+		const result = reclassifyTransactions(transactions, effectiveRules);
+
+		expect(result.changedCount).toBe(1);
+		expect(result.transactions[0]).toMatchObject({
+			normalizedDescription: 'LIDL',
+			category: 'Food',
+		});
+	});
+
+	it('re-labels every matching transaction when a rule is edited', () => {
+		const effectiveRules = buildEffectiveRuleLibrary(
+			[],
+			[buildRule({ id: 'custom-1', pattern: 'LIDL', normalizedName: 'LIDL', category: 'Shopping' })]
+		);
+		const transactions = [
+			buildTransaction('PAGAMENTO POS 1234 LIDL CATANIA', {
+				id: 'tx-1',
+				normalizedDescription: 'LIDL',
+				category: 'Food',
+			}),
+			buildTransaction('PAGAMENTO POS 9999 LIDL MILANO', {
+				id: 'tx-2',
+				normalizedDescription: 'LIDL',
+				category: 'Food',
+			}),
+		];
+
+		const result = reclassifyTransactions(transactions, effectiveRules);
+
+		expect(result.changedCount).toBe(2);
+		expect(result.transactions.every((transaction) => transaction.category === 'Shopping')).toBe(
+			true
+		);
+	});
+
+	it('leaves transactions untouched and returns the same array when nothing matches', () => {
+		const effectiveRules = buildEffectiveRuleLibrary(
+			[],
+			[buildRule({ id: 'custom-1', pattern: 'LIDL', normalizedName: 'LIDL', category: 'Food' })]
+		);
+		const transactions = [
+			buildTransaction('PAGAMENTO POS 4431 AMAZON EU', {
+				id: 'tx-1',
+				normalizedDescription: 'AMAZON',
+				category: 'Shopping',
+			}),
+		];
+
+		const result = reclassifyTransactions(transactions, effectiveRules);
+
+		expect(result.changedCount).toBe(0);
+		expect(result.transactions).toBe(transactions);
+	});
+
+	it('does not touch a transaction whose classification already matches the rule', () => {
+		const effectiveRules = buildEffectiveRuleLibrary(
+			[],
+			[buildRule({ id: 'custom-1', pattern: 'LIDL', normalizedName: 'LIDL', category: 'Food' })]
+		);
+		const transaction = buildTransaction('PAGAMENTO POS 1234 LIDL CATANIA', {
+			id: 'tx-1',
+			normalizedDescription: 'LIDL',
+			category: 'Food',
+		});
+
+		const result = reclassifyTransactions([transaction], effectiveRules);
+
+		expect(result.changedCount).toBe(0);
+		expect(result.transactions[0]).toBe(transaction);
 	});
 });

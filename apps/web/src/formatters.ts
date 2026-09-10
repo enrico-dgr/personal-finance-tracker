@@ -74,3 +74,22 @@ export function describeMonthComparison(
 		? `${formatAmount(delta)} meglio di ${formatMonth(previousMonth)}.`
 		: `${formatAmount(Math.abs(delta))} peggio di ${formatMonth(previousMonth)}.`;
 }
+
+export function describeFixedExpenseCadence(
+	cadence: 'monthly' | 'bimonthly' | 'quarterly' | 'irregular',
+	cadenceMonths: number
+) {
+	if (cadence === 'monthly') {
+		return 'mensile';
+	}
+
+	if (cadence === 'bimonthly') {
+		return 'bimestrale';
+	}
+
+	if (cadence === 'quarterly') {
+		return 'trimestrale';
+	}
+
+	return `irregolare, ogni ${cadenceMonths} mesi circa`;
+}

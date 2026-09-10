@@ -212,3 +212,55 @@ export function countMatchingTransactions(
 		doesRuleMatchTransaction(rule, transaction)
 	).length;
 }
+
+export type ReclassifyResult = {
+	transactions: Transaction[];
+	changedCount: number;
+};
+
+/**
+ * Re-applies the current effective rule set to already-imported transactions.
+ * A rule created, edited, or disabled after the import previously had no
+ * effect until the user re-imported the CSV; this keeps the session in sync.
+ *
+ * Known limitation: disabling/removing a rule does not revert a transaction
+ * to the original fallback classification (that needs the MCC-aware logic
+ * that only runs server-side at import time). The transaction simply keeps
+ * its last known label until a rule matches it again or it is re-imported.
+ */
+export function reclassifyTransactions(
+	transactions: Transaction[],
+	effectiveRules: EffectiveMerchantRule[]
+): ReclassifyResult {
+	const sortedRules = [...effectiveRules].sort(compareRules);
+	const timestamp = new Date().toISOString();
+	let changedCount = 0;
+
+	const nextTransactions = transactions.map((transaction) => {
+		const matchedRule = sortedRules.find((rule) =>
+			doesRuleMatchTransaction(rule, transaction)
+		);
+
+		if (
+			!matchedRule ||
+			(matchedRule.normalizedName === transaction.normalizedDescription &&
+				matchedRule.category === transaction.category)
+		) {
+			return transaction;
+		}
+
+		changedCount += 1;
+
+		return {
+			...transaction,
+			normalizedDescription: matchedRule.normalizedName,
+			category: matchedRule.category,
+			updatedAt: timestamp,
+		};
+	});
+
+	return {
+		transactions: changedCount > 0 ? nextTransactions : transactions,
+		changedCount,
+	};
+}
