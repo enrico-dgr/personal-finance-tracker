@@ -26,8 +26,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        run: npm run db:generate
+      - name: Generate Prisma contract
+        run: npm run prisma:contract:emit
+        run: npm run prisma:db -- sign
+        run: npm run prisma:db -- update
 
       - name: Lint
         run: npm run lint
