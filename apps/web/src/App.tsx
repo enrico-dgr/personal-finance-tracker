@@ -1497,7 +1497,9 @@ export default function App() {
 									? 'Aggiornamento dashboard'
 									: isRestoringSession
 										? 'Ripristino sessione...'
-										: 'Ambiente Locale'}
+										: isAuthenticated
+											? 'Account collegato'
+											: 'Ambiente Locale'}
 							</strong>
 							<span>
 								{isRestoringSession
