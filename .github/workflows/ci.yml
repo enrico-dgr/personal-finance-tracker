@@ -28,7 +28,9 @@ jobs:
 
       - name: Generate Prisma contract
         run: npm run prisma:contract:emit
+      - name: Sign Prisma contract
         run: npm run prisma:db -- sign
+      - name: Update Prisma contract
         run: npm run prisma:db -- update
 
       - name: Lint
