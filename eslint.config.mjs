@@ -8,6 +8,12 @@ export default tseslint.config(
 		ignores: [
 			'**/dist/**',
 			'**/node_modules/**',
+			'migrations/**',
+			'.agents/**',
+			'.claude/**',
+			'.cursor/**',
+			'.devin/**',
+			'apps/api/src/prisma/contract.d.ts',
 			'apps/web/vite.config.js',
 			'apps/web/vite.config.d.ts',
 		],

@@ -13,14 +13,11 @@
     "test:web": "npm run test --workspace apps/web",
     "test": "npm run test:api && npm run test:web",
     "lint": "eslint .",
-    "db:help": "prisma --help",
-    "db:init": "prisma init",
-    "db:orm": "prisma orm init",
-    "db": "prisma db",
-    "db:push": "prisma db push",
+    "prisma": "prisma",
+    "prisma:db": "prisma db",
+    "prisma:contract:emit": "prisma contract emit",
     "db:seed": "tsx prisma/seed.ts",
-    "postinstall": "prisma skills sync || exit 0",
-    "contract:emit": "prisma contract emit"
+    "postinstall": "prisma skills sync || exit 0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
