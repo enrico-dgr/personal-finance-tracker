@@ -21,3 +21,7 @@ prisma/dev.db-journal
 
 # Local Netlify folder
 .netlify
+.devin
+.agents
+.claude
+.cursor

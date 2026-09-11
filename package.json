@@ -1,5 +1,6 @@
 {
   "name": "personal-finance-tracker",
+  "type": "module",
   "version": "0.1.0",
   "private": true,
   "workspaces": [
@@ -12,22 +13,34 @@
     "test:web": "npm run test --workspace apps/web",
     "test": "npm run test:api && npm run test:web",
     "lint": "eslint .",
-    "db:generate": "prisma generate",
+    "db:help": "prisma --help",
+    "db:init": "prisma init",
+    "db:orm": "prisma orm init",
+    "db": "prisma db",
     "db:push": "prisma db push",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "postinstall": "prisma skills sync || exit 0",
+    "contract:emit": "prisma contract emit"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@prisma/cli-engine": "^0.2.3",
+    "@types/node": "^22.20.2",
     "concurrently": "^9.2.1",
     "eslint": "^10.10.0",
     "eslint-plugin-react-hooks": "^7.1.1",
     "globals": "^17.12.0",
-    "prisma": "^6.7.0",
+    "prisma": "^8.0.0-rc.10",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.70.0"
   },
   "engines": {
     "node": ">=22"
+  },
+  "dependencies": {
+    "@prisma/orm-extension-pgvector": "^8.0.0-rc.9",
+    "@prisma/orm-postgres": "^8.0.0-rc.9",
+    "dotenv": "^17.4.2"
   }
 }

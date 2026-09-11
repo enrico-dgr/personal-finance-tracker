@@ -1,0 +1,43 @@
+// use prisma-next
+
+model User {
+  id            String         @id @default(uuid())
+  email         String         @unique
+  passwordHash  String
+  createdAt     String    @default(now())
+  updatedAt     temporal.updatedAtString()
+  merchantRules MerchantRule[]
+}
+
+/// Deprecated by ADR-0002: transaction history is session-only and this table is
+/// never written to. Kept in the contract so an existing local dev.db stays readable;
+/// see ADR-0003 for the conditions under which it gets dropped.
+model Transaction {
+  id                    String      @id @default(uuid())
+  fingerprint           String      @unique
+  date                  String
+  originalDescription   String
+  normalizedDescription String
+  amount                Float
+  category              String
+  createdAt             String @default(now())
+  updatedAt             temporal.updatedAtString()
+}
+
+model MerchantRule {
+  id             String      @id @default(uuid())
+  userId         String?
+  defaultRuleId  String?
+  pattern        String
+  patternType    String      @default("contains")
+  normalizedName String
+  category       String
+  priority       Int         @default(1000)
+  isDisabled     Boolean     @default(false)
+  createdAt      String @default(now())
+  updatedAt      temporal.updatedAtString()
+  user           User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, updatedAt])
+  @@index([userId, defaultRuleId])
+}
