@@ -250,7 +250,7 @@ export default function App() {
 					patternType: rulePatternType,
 				},
 				selectedTransactions
-		  )
+			)
 		: 0;
 	const monthlySpend = stats.monthlySpend;
 	const monthlySpendValues = monthlySpend.map((item) => item.total);
@@ -307,7 +307,7 @@ export default function App() {
 						0
 					) / liquidityChartSeries.length
 				).toFixed(2)
-		  )
+			)
 		: 0;
 	const positiveSavingsMonths = liquidityChartSeries.filter(
 		(point) => point.savings > 0
@@ -337,7 +337,7 @@ export default function App() {
 					(
 						currentLiquidityMonth.savings - previousLiquidityMonth.savings
 					).toFixed(2)
-			  )
+				)
 			: null;
 	const liquidityFilterSummary = [
 		formatFilterSummary(
@@ -355,7 +355,7 @@ export default function App() {
 		analyticsRangeStart && analyticsRangeEnd
 			? `${formatMonth(analyticsRangeStart)} - ${formatMonth(
 					analyticsRangeEnd
-			  )}`
+				)}`
 			: 'intero periodo',
 	].join(' • ');
 	const previousMonthSpend = monthlySpend.at(-2)?.total ?? null;
@@ -370,7 +370,7 @@ export default function App() {
 						(Math.abs(currentMonthDelta ?? 0) / previousMonthSpend) *
 						100
 					).toFixed(1)
-			  )
+				)
 			: null;
 	const paginationItems = buildPaginationItems(
 		currentTransactionPage,
@@ -435,7 +435,7 @@ export default function App() {
 		setAnalyticsEndMonth((currentValue) =>
 			currentValue && analyticsMonthOptions.includes(currentValue)
 				? currentValue
-				: analyticsMonthOptions.at(-1) ?? analyticsMonthOptions[0]
+				: (analyticsMonthOptions.at(-1) ?? analyticsMonthOptions[0])
 		);
 	}, [transactions]);
 
@@ -769,7 +769,7 @@ export default function App() {
 							normalizedDescription: normalizedDescription.trim(),
 							category,
 							updatedAt: timestamp,
-					  }
+						}
 					: transaction
 			);
 			let reclassifiedCount = 0;
@@ -843,7 +843,7 @@ export default function App() {
 							priority: ruleEditorPriority,
 							isDisabled: false,
 						})
-				  )
+					)
 				: await persistRule({
 						pattern: ruleEditorPattern.trim(),
 						patternType: ruleEditorPatternType,
@@ -851,7 +851,7 @@ export default function App() {
 						category: ruleEditorCategory,
 						priority: ruleEditorPriority,
 						isDisabled: false,
-				  });
+					});
 			const nextEffectiveRules = buildEffectiveRuleLibrary(
 				defaultRules,
 				mergeRuleCollection(rules, savedRule)
@@ -955,8 +955,8 @@ export default function App() {
 					selectedRule.source === 'default'
 						? 'Regola default disattivata nella tua libreria.'
 						: isAuthenticated
-						? 'Regola eliminata dal tuo account.'
-						: 'Regola eliminata dal browser.'
+							? 'Regola eliminata dal tuo account.'
+							: 'Regola eliminata dal browser.'
 				}${reclassifyNote}`
 			);
 		} catch (error) {
@@ -1135,21 +1135,20 @@ export default function App() {
 	const userMenuTitle = isRestoringSession
 		? 'Ripristino sessione'
 		: isAuthenticated && authUser
-		? authUser.email
-		: 'Account';
+			? authUser.email
+			: 'Account';
 	const userMenuSubtitle = isRestoringSession
 		? 'Verifica in corso'
 		: isAuthenticated
-		? 'Profilo, regole e logout'
-		: 'Sign in o Sign up';
+			? 'Profilo, regole e logout'
+			: 'Sign in o Sign up';
 	const authPageTitle = isAuthenticated
 		? 'Profilo e sincronizzazione.'
 		: authMode === 'signup'
-		? 'Crea il tuo account.'
-		: 'Accedi per sincronizzare le regole.';
-	const authPageCopy = isAuthenticated
-		? 'Qui gestisci il tuo profilo e verifichi che la sincronizzazione riguardi solo le regole. I movimenti continuano a vivere esclusivamente nella sessione corrente.'
-		: 'Questa pagina serve solo all’account. La dashboard resta libera da login obbligatorio e i movimenti non vengono mai salvati automaticamente nel backend.';
+			? 'Crea il tuo account.'
+			: 'Accedi per sincronizzare le regole.';
+	const authPageCopy =
+		"Non perdere le tue regole di classificazione dei movimenti tra un device e l'altro.";
 
 	return (
 		<main className="app-shell">
@@ -1317,7 +1316,7 @@ export default function App() {
 							<span>
 								{isAuthenticated
 									? 'Le regole seguono il tuo account. I movimenti restano comunque solo nella sessione corrente.'
-									: 'Senza login puoi usare l’app liberamente: le regole restano nel browser, lo storico non viene salvato.'}
+									: 'Senza login puoi usare l’app liberamente, ma le regole rimangono in questo device.'}
 							</span>
 						</div>
 					</section>
@@ -1430,15 +1429,15 @@ export default function App() {
 													? 'Creazione account...'
 													: 'Accesso...'
 												: authMode === 'signup'
-												? 'Crea account'
-												: 'Accedi'}
+													? 'Crea account'
+													: 'Accedi'}
 										</button>
 									</form>
 
 									<p className="auth-note">
 										Se accedi, sincronizzi solo le regole. Se resti anonimo, le
-										regole restano nel browser. In ogni caso i movimenti non vengono salvati
-										da nessuna parte.
+										regole restano nel browser. In ogni caso i movimenti non
+										vengono salvati da nessuna parte.
 									</p>
 								</>
 							)}
@@ -1487,8 +1486,8 @@ export default function App() {
 							<p className="hero-copy">
 								Import CSV bancari, pulizia automatica delle descrizioni e
 								regole riutilizzabili. Lo storico dei movimenti resta nella
-								sessione corrente, mentre le regole possono sincronizzarsi solo
-								se apri la pagina account.
+								sessione corrente, mentre le regole che crei sono legate al
+								device e all&apos;account.
 							</p>
 						</div>
 						<div className="hero-badge">
@@ -1497,15 +1496,15 @@ export default function App() {
 								{isPending
 									? 'Aggiornamento dashboard'
 									: isRestoringSession
-									? 'Ripristino sessione...'
-									: 'Modalità ibrida pronta'}
+										? 'Ripristino sessione...'
+										: 'Ambiente Locale'}
 							</strong>
 							<span>
 								{isRestoringSession
 									? 'Verifica account e ricarico regole sincronizzate in corso.'
 									: isAuthenticated
-									? 'Regole sincronizzate su account. Storico movimenti solo in sessione.'
-									: 'Regole nel browser. Storico movimenti non persistente.'}
+										? 'Regole sincronizzate su account.'
+										: 'Regole salvate localmente.'}
 							</span>
 						</div>
 					</section>
@@ -1530,8 +1529,8 @@ export default function App() {
 								{isRestoringSession
 									? 'Ripristino account in corso.'
 									: isAuthenticated
-									? 'Sincronizzate sul tuo account.'
-									: 'Salvate nel browser locale.'}
+										? 'Sincronizzate sul tuo account.'
+										: 'Salvate nel browser locale.'}
 							</small>
 						</article>
 					</section>
@@ -1764,20 +1763,20 @@ export default function App() {
 												{currentMonthDelta === null
 													? 'Serve almeno un altro mese per confrontare il trend.'
 													: currentMonthDelta < 0
-													? `${formatAmount(
-															Math.abs(currentMonthDelta)
-													  )} in meno del mese precedente${
-															currentMonthDeltaPercentage
-																? ` (${currentMonthDeltaPercentage}%)`
-																: ''
-													  }.`
-													: `${formatAmount(
-															currentMonthDelta
-													  )} in più del mese precedente${
-															currentMonthDeltaPercentage
-																? ` (${currentMonthDeltaPercentage}%)`
-																: ''
-													  }.`}
+														? `${formatAmount(
+																Math.abs(currentMonthDelta)
+															)} in meno del mese precedente${
+																currentMonthDeltaPercentage
+																	? ` (${currentMonthDeltaPercentage}%)`
+																	: ''
+															}.`
+														: `${formatAmount(
+																currentMonthDelta
+															)} in più del mese precedente${
+																currentMonthDeltaPercentage
+																	? ` (${currentMonthDeltaPercentage}%)`
+																	: ''
+															}.`}
 											</small>
 										</div>
 										<div className="trend-chart">
@@ -1899,8 +1898,8 @@ export default function App() {
 											</strong>
 											<span>Spesa discrezionale del mese</span>
 											<small>
-												{stats.savingsPlan.shareOfMonth}% dell&apos;uscita mensile
-												corrente.
+												{stats.savingsPlan.shareOfMonth}% dell&apos;uscita
+												mensile corrente.
 											</small>
 										</div>
 										<div className="scenario-grid">
@@ -2235,7 +2234,7 @@ export default function App() {
 															selectedSpendDelta,
 															previousLiquidityMonth.month,
 															'expense'
-													  )
+														)
 													: 'Serve almeno un mese precedente nel range per il confronto.'}
 											</small>
 										</div>
@@ -2255,7 +2254,7 @@ export default function App() {
 															savingsDelta,
 															previousLiquidityMonth.month,
 															'savings'
-													  )
+														)
 													: 'Serve almeno un mese precedente nel range per il confronto.'}
 											</small>
 										</div>
@@ -2842,8 +2841,8 @@ export default function App() {
 										{isRuleSaving
 											? 'Salvataggio...'
 											: selectedRule
-											? 'Aggiorna regola'
-											: 'Crea regola'}
+												? 'Aggiorna regola'
+												: 'Crea regola'}
 									</button>
 									<button
 										className="button button--danger"
@@ -2854,8 +2853,8 @@ export default function App() {
 										{isRuleDeleting
 											? 'Salvataggio...'
 											: selectedRule?.source === 'default'
-											? 'Disattiva regola default'
-											: 'Elimina regola'}
+												? 'Disattiva regola default'
+												: 'Elimina regola'}
 									</button>
 								</div>
 							</form>

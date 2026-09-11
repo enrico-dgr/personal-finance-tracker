@@ -333,7 +333,7 @@ async function listRulesForUser(userId: string) {
     (m) => m.priority.desc(),
     (m) => m.updatedAt.desc(),
     (m) => m.createdAt.desc(),
-  ]);
+  ]).all();
 }
 
 async function syncRulesForUser(

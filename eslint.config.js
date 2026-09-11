@@ -41,6 +41,13 @@ export default defineConfig([
   },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
+    settings: {
+      react: {
+        version: "19.1",
+        defaultVersion: "19.1",
+        pragma: "React",
+      },
+    },
     languageOptions: {
       ...pluginReact.configs.flat.recommended.languageOptions,
       globals: globals.browser,
