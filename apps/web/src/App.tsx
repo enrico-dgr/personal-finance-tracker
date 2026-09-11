@@ -1,4 +1,4 @@
-import {
+import React, {
 	type FormEvent,
 	useEffect,
 	useRef,
@@ -1604,7 +1604,7 @@ export default function App() {
 										<span>
 											Parser compatibile con Mediolanum e file con colonne
 											separate entrate/uscite. Le regole locali o sincronizzate
-											vengono applicate subito all'import.
+											vengono applicate subito all&apos;import.
 										</span>
 									</div>
 									<div className="inline-actions">
@@ -1899,7 +1899,7 @@ export default function App() {
 											</strong>
 											<span>Spesa discrezionale del mese</span>
 											<small>
-												{stats.savingsPlan.shareOfMonth}% dell'uscita mensile
+												{stats.savingsPlan.shareOfMonth}% dell&apos;uscita mensile
 												corrente.
 											</small>
 										</div>
