@@ -25,3 +25,4 @@ prisma/dev.db-journal
 .agents
 .claude
 .cursor
+.prisma/

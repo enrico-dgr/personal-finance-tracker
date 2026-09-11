@@ -27,7 +27,7 @@ jobs:
         run: npm ci
 
       - name: Generate Prisma contract
-        run: npm run prisma:contract:emit
+        run: npm run contract:emit
       # - name: Sign Prisma contract
       #   run: npm run prisma:db -- sign
       # - name: Update Prisma contract
