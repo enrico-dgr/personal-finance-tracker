@@ -98,6 +98,11 @@ type AuthResponse = {
   rules: MerchantRule[];
 };
 
+const buildUrl = (path: string) => {
+  const baseUrl = import.meta.env.VITE_API_URL ?? '';
+  return `${baseUrl}${path}`;
+};
+
 async function fetchJson<T>(input: string, init?: RequestInit, authToken?: string): Promise<T> {
   const headers = new Headers(init?.headers);
 
@@ -105,7 +110,7 @@ async function fetchJson<T>(input: string, init?: RequestInit, authToken?: strin
     headers.set('Authorization', `Bearer ${authToken}`);
   }
 
-  const response = await fetch(input, {
+  const response = await fetch((buildUrl(input)), {
     ...init,
     headers
   });
@@ -125,7 +130,7 @@ async function fetchVoid(input: string, init?: RequestInit, authToken?: string) 
     headers.set('Authorization', `Bearer ${authToken}`);
   }
 
-  const response = await fetch(input, {
+  const response = await fetch(buildUrl(input), {
     ...init,
     headers
   });
