@@ -27,9 +27,11 @@ import {
 import {
 	clearStoredAuthToken,
 	loadFixedExpenseOverrides,
+	loadAuthenticatedRules,
 	loadLocalRules,
 	loadStoredAuthToken,
 	saveFixedExpenseOverrides,
+	saveAuthenticatedRules,
 	saveLocalRules,
 	saveStoredAuthToken,
 } from './browserStorage';
@@ -92,11 +94,13 @@ export default function App() {
 	]);
 	const [defaultRules, setDefaultRules] = useState<MerchantRule[]>([]);
 	const [transactions, setTransactions] = useState<Transaction[]>([]);
-	const [rules, setRules] = useState<MerchantRule[]>(() => loadLocalRules());
-	const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 	const [authToken, setAuthToken] = useState<string | null>(() =>
 		loadStoredAuthToken()
 	);
+	const [rules, setRules] = useState<MerchantRule[]>(() =>
+		authToken ? loadAuthenticatedRules() : loadLocalRules()
+	);
+	const [authUser, setAuthUser] = useState<AuthUser | null>(null);
 	const [isBootstrapping, setIsBootstrapping] = useState(true);
 	const [authMode, setAuthMode] = useState<AuthMode>(initialRoute.authMode);
 	const [authEmail, setAuthEmail] = useState('');
@@ -111,7 +115,6 @@ export default function App() {
 	const [rulePatternType, setRulePatternType] =
 		useState<RulePatternType>('contains');
 	const [rulePriority, setRulePriority] = useState(1000);
-	const [saveAsRule, setSaveAsRule] = useState(true);
 	const [transactionSearch, setTransactionSearch] = useState('');
 	const [transactionMonthFilter, setTransactionMonthFilter] =
 		useState(ALL_FILTER_VALUE);
@@ -243,15 +246,24 @@ export default function App() {
 		paginatedTransactions.every((transaction) =>
 			selectedTransactionIds.includes(transaction.id)
 		);
-	const manualRulePreviewCount = saveAsRule
-		? countMatchingTransactions(
+	const manualRulePreviewCount =  countMatchingTransactions(
 				{
 					pattern: rulePattern.trim() || normalizedDescription.trim(),
 					patternType: rulePatternType,
 				},
 				selectedTransactions
 			)
-		: 0;
+		;
+  
+    const rulePreviewCountOnFiltered = 
+		 countMatchingTransactions(
+				{
+					pattern: rulePattern.trim() || normalizedDescription.trim(),
+					patternType: rulePatternType,
+				},
+				paginatedTransactions
+			)
+	;
 	const monthlySpend = stats.monthlySpend;
 	const monthlySpendValues = monthlySpend.map((item) => item.total);
 	const monthlyTrendScale = buildChartScale(
@@ -510,8 +522,8 @@ export default function App() {
 	async function initializeApp() {
 		setErrorMessage('');
 
-		const localRules = loadLocalRules();
-		setRules(localRules);
+		const storedRules = authToken ? loadAuthenticatedRules() : loadLocalRules();
+		setRules(storedRules);
 
 		try {
 			const [categoriesResponse, defaultRulesResponse] = await Promise.all([
@@ -546,12 +558,12 @@ export default function App() {
 				setAuthUser(userResponse.user);
 				setRules(rulesResponse.rules);
 			});
-			saveLocalRules(rulesResponse.rules);
+			saveAuthenticatedRules(rulesResponse.rules);
 		} catch {
 			clearStoredAuthToken();
 			setAuthToken(null);
 			setAuthUser(null);
-			setRules(localRules);
+			setRules(loadLocalRules());
 			setStatusMessage(
 				'Sessione sincronizzata scaduta. Regole locali del browser ripristinate.'
 			);
@@ -568,7 +580,6 @@ export default function App() {
 			setRulePattern('');
 			setRulePatternType('contains');
 			setRulePriority(1000);
-			setSaveAsRule(true);
 			return;
 		}
 
@@ -578,7 +589,6 @@ export default function App() {
 		setRulePattern(transaction.normalizedDescription);
 		setRulePatternType('contains');
 		setRulePriority(1000);
-		setSaveAsRule(true);
 	}
 
 	function populateRuleEditor(rule: EffectiveMerchantRule | null) {
@@ -652,11 +662,6 @@ export default function App() {
 
 	function openCorrectionModal(transaction: Transaction) {
 		applySelection(transaction);
-		setSelectedTransactionIds((currentIds) =>
-			currentIds.length
-				? [...new Set([...currentIds, transaction.id])]
-				: [transaction.id]
-		);
 		setIsCorrectionModalOpen(true);
 	}
 
@@ -750,11 +755,6 @@ export default function App() {
 	async function handleSaveTransaction(event: FormEvent<HTMLFormElement>) {
 		event.preventDefault();
 
-		if (!selectedTransactions.length) {
-			setErrorMessage('Seleziona almeno una riga da modificare.');
-			return;
-		}
-
 		setIsSaving(true);
 		setErrorMessage('');
 		setStatusMessage('');
@@ -774,27 +774,25 @@ export default function App() {
 			);
 			let reclassifiedCount = 0;
 
-			if (saveAsRule) {
-				const savedRule = await persistRule({
-					pattern: rulePattern.trim() || normalizedDescription.trim(),
-					patternType: rulePatternType,
-					normalizedName: normalizedDescription.trim(),
-					category,
-					priority: rulePriority,
-					isDisabled: false,
-				});
-				const nextEffectiveRules = buildEffectiveRuleLibrary(
-					defaultRules,
-					mergeRuleCollection(rules, savedRule)
-				);
-				const reclassifyResult = reclassifyTransactions(
-					nextTransactions,
-					nextEffectiveRules
-				);
+      const savedRule = await persistRule({
+        pattern: rulePattern.trim() || normalizedDescription.trim(),
+        patternType: rulePatternType,
+        normalizedName: normalizedDescription.trim(),
+        category,
+        priority: rulePriority,
+        isDisabled: false,
+      });
+      const nextEffectiveRules = buildEffectiveRuleLibrary(
+        defaultRules,
+        mergeRuleCollection(rules, savedRule)
+      );
+      const reclassifyResult = reclassifyTransactions(
+        nextTransactions,
+        nextEffectiveRules
+      );
 
-				nextTransactions = reclassifyResult.transactions;
-				reclassifiedCount = reclassifyResult.changedCount;
-			}
+      nextTransactions = reclassifyResult.transactions;
+      reclassifiedCount = reclassifyResult.changedCount;
 
 			setTransactions(nextTransactions);
 			setIsCorrectionModalOpen(false);
@@ -805,12 +803,9 @@ export default function App() {
 					: '';
 
 			setStatusMessage(
-				saveAsRule
-					? isAuthenticated
+				isAuthenticated
 						? `Aggiornate ${selectedTransactions.length} righe. Regola sincronizzata sul tuo account e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.${otherRowsNote}`
-						: `Aggiornate ${selectedTransactions.length} righe. Regola salvata nel browser e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.${otherRowsNote}`
-					: `Aggiornate ${selectedTransactions.length} righe solo nella sessione corrente.`
-			);
+						: `Aggiornate ${selectedTransactions.length} righe. Regola salvata nel browser e ancora valida su ${manualRulePreviewCount}/${selectedTransactions.length} righe selezionate.${otherRowsNote}`);
 		} catch (error) {
 			setErrorMessage(
 				error instanceof Error ? error.message : 'Salvataggio non riuscito.'
@@ -927,11 +922,11 @@ export default function App() {
 
 				nextRules = rules.filter((rule) => rule.id !== rawRuleId);
 				setRules(nextRules);
-				saveLocalRules(nextRules);
+				saveActiveRules(nextRules);
 			}
 
 			setRules(nextRules);
-			saveLocalRules(nextRules);
+			saveActiveRules(nextRules);
 			populateRuleEditor(null);
 
 			const nextEffectiveRules = buildEffectiveRuleLibrary(
@@ -992,7 +987,7 @@ export default function App() {
 				authMode === 'signup' ? await signUp(payload) : await login(payload);
 
 			saveStoredAuthToken(response.token);
-			saveLocalRules(response.rules);
+			saveAuthenticatedRules(response.rules);
 			setAuthToken(response.token);
 			setAuthUser(response.user);
 			setRules(response.rules);
@@ -1053,13 +1048,14 @@ export default function App() {
 	}
 
 	function handleLogout() {
-		saveLocalRules(rules);
+		saveAuthenticatedRules(rules);
 		clearStoredAuthToken();
 		setAuthToken(null);
 		setAuthUser(null);
+		setRules(loadLocalRules());
 		navigateToPage('dashboard');
 		setStatusMessage(
-			'Logout eseguito. Le regole restano disponibili nel browser su questo dispositivo.'
+			'Logout eseguito. Le regole dell\'account non sono più visibili; sono state ripristinate le regole locali del browser.'
 		);
 	}
 
@@ -1107,7 +1103,7 @@ export default function App() {
 			const result = await saveRule(authToken, payload);
 			const nextRules = mergeRuleCollection(rules, result.rule);
 			setRules(nextRules);
-			saveLocalRules(nextRules);
+			saveAuthenticatedRules(nextRules);
 			return result.rule;
 		}
 
@@ -1130,6 +1126,15 @@ export default function App() {
 		setRules(nextRules);
 		saveLocalRules(nextRules);
 		return localRule;
+	}
+
+	function saveActiveRules(nextRules: MerchantRule[]) {
+		if (authToken) {
+			saveAuthenticatedRules(nextRules);
+			return;
+		}
+
+		saveLocalRules(nextRules);
 	}
 
 	const userMenuTitle = isRestoringSession
@@ -2997,7 +3002,6 @@ export default function App() {
 								<label>
 									<span>Pattern regola</span>
 									<input
-										disabled={!saveAsRule}
 										onChange={(event) => setRulePattern(event.target.value)}
 										placeholder="Es. AMAZON o STIPENDIO"
 										type="text"
@@ -3008,7 +3012,6 @@ export default function App() {
 								<label>
 									<span>Tipo pattern</span>
 									<select
-										disabled={!saveAsRule}
 										onChange={(event) =>
 											setRulePatternType(event.target.value as RulePatternType)
 										}
@@ -3022,7 +3025,6 @@ export default function App() {
 								<label>
 									<span>Priorita regola</span>
 									<input
-										disabled={!saveAsRule}
 										min={0}
 										onChange={(event) =>
 											setRulePriority(Number(event.target.value) || 0)
@@ -3033,25 +3035,11 @@ export default function App() {
 								</label>
 							</div>
 
-							<label className="checkbox-row">
-								<input
-									checked={saveAsRule}
-									onChange={(event) => setSaveAsRule(event.target.checked)}
-									type="checkbox"
-								/>
-								<span>
-									Salva anche una regola riutilizzabile{' '}
-									{isAuthenticated ? 'sincronizzata' : 'nel browser'}
-								</span>
-							</label>
-
-							{saveAsRule ? (
-								<p className="inline-note">
-									Con questa configurazione la regola continua a matchare{' '}
-									{manualRulePreviewCount} righe su{' '}
-									{selectedTransactions.length} selezionate.
-								</p>
-							) : null}
+              <p className="inline-note">
+                Con questa configurazione la regola continua a matchare{' '}
+                {rulePreviewCountOnFiltered} righe su{' '}
+                {paginatedTransactions.length} selezionate.
+              </p>
 
 							<div className="inline-actions">
 								<button

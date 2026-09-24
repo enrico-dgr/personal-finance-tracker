@@ -2,39 +2,24 @@ import type { MerchantRule } from './api';
 import type { FixedExpenseOverrideState } from './fixedExpenses';
 
 const LOCAL_RULES_KEY = 'finance-tracker.local-rules';
+const AUTHENTICATED_RULES_KEY = 'finance-tracker.authenticated-rules';
 const AUTH_TOKEN_KEY = 'finance-tracker.auth-token';
 const FIXED_EXPENSE_OVERRIDES_KEY = 'finance-tracker.fixed-expense-overrides';
 
 export function loadLocalRules() {
-  if (typeof window === 'undefined') {
-    return [] as MerchantRule[];
-  }
-
-  try {
-    const rawValue = window.localStorage.getItem(LOCAL_RULES_KEY);
-
-    if (!rawValue) {
-      return [] as MerchantRule[];
-    }
-
-    const parsedValue = JSON.parse(rawValue) as unknown;
-
-    if (!Array.isArray(parsedValue)) {
-      return [] as MerchantRule[];
-    }
-
-    return parsedValue.filter(isMerchantRuleLike) as MerchantRule[];
-  } catch {
-    return [] as MerchantRule[];
-  }
+  return loadRulesFromStorage(LOCAL_RULES_KEY);
 }
 
 export function saveLocalRules(rules: MerchantRule[]) {
-  if (typeof window === 'undefined') {
-    return;
-  }
+  saveRulesToStorage(LOCAL_RULES_KEY, rules);
+}
 
-  window.localStorage.setItem(LOCAL_RULES_KEY, JSON.stringify(rules));
+export function loadAuthenticatedRules() {
+  return loadRulesFromStorage(AUTHENTICATED_RULES_KEY);
+}
+
+export function saveAuthenticatedRules(rules: MerchantRule[]) {
+  saveRulesToStorage(AUTHENTICATED_RULES_KEY, rules);
 }
 
 export function loadStoredAuthToken() {
@@ -103,6 +88,38 @@ export function saveFixedExpenseOverrides(overrides: Record<string, FixedExpense
   }
 
   window.localStorage.setItem(FIXED_EXPENSE_OVERRIDES_KEY, JSON.stringify(overrides));
+}
+
+function loadRulesFromStorage(storageKey: string) {
+  if (typeof window === 'undefined') {
+    return [] as MerchantRule[];
+  }
+
+  try {
+    const rawValue = window.localStorage.getItem(storageKey);
+
+    if (!rawValue) {
+      return [] as MerchantRule[];
+    }
+
+    const parsedValue = JSON.parse(rawValue) as unknown;
+
+    if (!Array.isArray(parsedValue)) {
+      return [] as MerchantRule[];
+    }
+
+    return parsedValue.filter(isMerchantRuleLike) as MerchantRule[];
+  } catch {
+    return [] as MerchantRule[];
+  }
+}
+
+function saveRulesToStorage(storageKey: string, rules: MerchantRule[]) {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  window.localStorage.setItem(storageKey, JSON.stringify(rules));
 }
 
 function isMerchantRuleLike(value: unknown): value is MerchantRule {
