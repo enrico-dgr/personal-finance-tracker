@@ -68,6 +68,7 @@ describe('describeFixedExpenseCadence', () => {
 
 	it('labels a quarterly cadence', () => {
 		expect(describeFixedExpenseCadence('quarterly', 3)).toBe('trimestrale');
+		expect(describeFixedExpenseCadence('semiannual', 6)).toBe('semestrale');
 	});
 
 	it('describes an irregular cadence with the average gap', () => {

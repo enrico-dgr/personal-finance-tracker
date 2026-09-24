@@ -76,7 +76,7 @@ export function describeMonthComparison(
 }
 
 export function describeFixedExpenseCadence(
-	cadence: 'monthly' | 'bimonthly' | 'quarterly' | 'irregular',
+	cadence: 'monthly' | 'bimonthly' | 'quarterly' | 'semiannual' | 'irregular',
 	cadenceMonths: number
 ) {
 	if (cadence === 'monthly') {
@@ -89,6 +89,10 @@ export function describeFixedExpenseCadence(
 
 	if (cadence === 'quarterly') {
 		return 'trimestrale';
+	}
+
+	if (cadence === 'semiannual') {
+		return 'semestrale';
 	}
 
 	return `irregolare, ogni ${cadenceMonths} mesi circa`;

@@ -759,6 +759,15 @@ p {
 	gap: 1rem;
 }
 
+.bar-row__actions {
+	display: flex;
+	gap: 0.5rem;
+}
+
+.bar-row__actions .button {
+	flex: 1;
+}
+
 .bar-row__meta {
 	color: rgba(31, 41, 51, 0.64);
 }

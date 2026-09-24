@@ -1,8 +1,8 @@
 import type { Transaction } from './api';
 
-export type FixedExpenseCadence = 'monthly' | 'bimonthly' | 'quarterly' | 'irregular';
+export type FixedExpenseCadence = 'monthly' | 'bimonthly' | 'quarterly' | 'semiannual' | 'irregular';
 
-export type FixedExpenseOverrideState = 'included' | 'excluded';
+export type FixedExpenseOverrideState = 'included' | 'excluded' | 'deleted';
 
 export type FixedExpenseCandidate = {
 	merchant: string;
@@ -83,13 +83,23 @@ function inferCadence(sortedMonthKeys: string[]): {
 		return { cadence: 'quarterly', cadenceMonths: 3 };
 	}
 
+	if (roundedGap === 6 && gaps.every((gap) => gap === 6)) {
+		return { cadence: 'semiannual', cadenceMonths: 6 };
+	}
+
 	return { cadence: 'irregular', cadenceMonths: roundedGap };
 }
 
 export function buildFixedExpenseCandidates(transactions: Transaction[]): FixedExpenseCandidate[] {
 	const merchantMap = new Map<string, { category: string; monthlyTotals: Map<string, number> }>();
+	let earliestMonth = Infinity;
+	let latestMonth = -Infinity;
 
 	for (const transaction of transactions) {
+		const observedMonth = monthIndex(transaction.date.slice(0, 7));
+		earliestMonth = Math.min(earliestMonth, observedMonth);
+		latestMonth = Math.max(latestMonth, observedMonth);
+
 		if (transaction.amount >= 0) {
 			continue;
 		}
@@ -105,6 +115,7 @@ export function buildFixedExpenseCandidates(transactions: Transaction[]): FixedE
 		current.monthlyTotals.set(monthKey, (current.monthlyTotals.get(monthKey) ?? 0) + spendAmount);
 		merchantMap.set(merchant, current);
 	}
+	const observationSpanMonths = transactions.length ? latestMonth - earliestMonth + 1 : 0;
 
 	const candidates: FixedExpenseCandidate[] = [];
 
@@ -127,7 +138,10 @@ export function buildFixedExpenseCandidates(transactions: Transaction[]): FixedE
 		const { cadence, cadenceMonths } = inferCadence(sortedMonthKeys);
 		const monthlyEquivalent = averagePerOccurrence / cadenceMonths;
 		const isAutoDetected =
-			occurrenceCount >= MIN_OCCURRENCES_FOR_AUTO_DETECTION && isStableAmount && cadence !== 'irregular';
+			occurrenceCount >= MIN_OCCURRENCES_FOR_AUTO_DETECTION &&
+			isStableAmount &&
+			cadence !== 'irregular' &&
+			(observationSpanMonths < 12 || occurrenceCount > 2 || cadence === 'semiannual');
 
 		candidates.push({
 			merchant,
@@ -172,7 +186,7 @@ export function summarizeFixedExpenses(
 		.filter((entry) => entry.isIncluded)
 		.sort((left, right) => right.monthlyEquivalent - left.monthlyEquivalent);
 	const excluded = visible
-		.filter((entry) => !entry.isIncluded)
+		.filter((entry) => !entry.isIncluded && entry.overrideState !== 'deleted')
 		.sort((left, right) => right.monthlyEquivalent - left.monthlyEquivalent);
 	const addableMerchants = entries
 		.filter((entry) => !entry.isIncluded && entry.overrideState === null)

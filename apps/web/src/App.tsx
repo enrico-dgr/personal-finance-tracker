@@ -1036,6 +1036,16 @@ export default function App() {
 		saveFixedExpenseOverrides(nextOverrides);
 	}
 
+  function handleDeleteFixedExpense(merchant: string) {
+		const nextOverrides: Record<string, FixedExpenseOverrideState> = {
+			...fixedExpenseOverrides,
+			[merchant]: 'deleted',
+		};
+
+		setFixedExpenseOverrides(nextOverrides);
+		saveFixedExpenseOverrides(nextOverrides);
+	}
+
 	function handleAddFixedExpense(event: FormEvent) {
 		event.preventDefault();
 
@@ -2044,7 +2054,9 @@ export default function App() {
 															{formatAmount(entry.monthlyEquivalent)}
 														</strong>
 													</div>
-													<button
+                          {/* flex row for action buttons */}
+													<div className="bar-row__actions">
+                            <button
 														type="button"
 														className="button button--secondary"
 														onClick={() =>
@@ -2053,6 +2065,16 @@ export default function App() {
 													>
 														Includi di nuovo
 													</button>
+                          <button
+														type="button"
+														className="button button--danger"
+														onClick={() =>
+															handleDeleteFixedExpense(entry.merchant)
+														}
+													>
+														Elimina
+													</button>
+                          </div>
 												</div>
 											))}
 										</div>

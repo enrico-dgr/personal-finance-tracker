@@ -94,6 +94,40 @@ describe('buildFixedExpenseCandidates', () => {
 		});
 	});
 
+	it('does not auto-detect two nearby purchases in a year of transactions', () => {
+		const transactions = [
+			...monthlyTransactions('SPORADIC', 'Shopping', {
+				'2026-01': -50,
+				'2026-02': -50,
+			}),
+			...monthlyTransactions('OTHER', 'Bills', { '2026-12': -100 }),
+		];
+
+		const candidate = buildFixedExpenseCandidates(transactions).find((entry) => entry.merchant === 'SPORADIC');
+
+		expect(candidate).toMatchObject({ cadence: 'monthly', isAutoDetected: false });
+		expect(summarizeFixedExpenses(buildFixedExpenseCandidates(transactions), {}).included).toHaveLength(0);
+	});
+
+	it('auto-detects two payments six months apart as semiannual', () => {
+		const transactions = [
+			...monthlyTransactions('INSURANCE', 'Bills', {
+				'2026-01': -120,
+				'2026-07': -120,
+			}),
+			...monthlyTransactions('OTHER', 'Bills', { '2026-12': -100 }),
+		];
+
+		const candidate = buildFixedExpenseCandidates(transactions).find((entry) => entry.merchant === 'INSURANCE');
+
+		expect(candidate).toMatchObject({
+			cadence: 'semiannual',
+			cadenceMonths: 6,
+			monthlyEquivalent: 20,
+			isAutoDetected: true,
+		});
+	});
+
 	it('does not auto-detect a merchant with unstable amounts, like a supermarket', () => {
 		const transactions = monthlyTransactions('LIDL', 'Food', {
 			'2026-01': -40,
