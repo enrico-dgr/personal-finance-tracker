@@ -183,7 +183,7 @@ export function summarizeFixedExpenses(
 	// is only reachable through the "add manually" picker.
 	const visible = entries.filter((entry) => entry.isIncluded || entry.overrideState !== null);
 	const included = visible
-		.filter((entry) => entry.isIncluded)
+		.filter((entry) => entry.isIncluded && entry.overrideState !== 'deleted')
 		.sort((left, right) => right.monthlyEquivalent - left.monthlyEquivalent);
 	const excluded = visible
 		.filter((entry) => !entry.isIncluded && entry.overrideState !== 'deleted')
