@@ -60,6 +60,7 @@ import {
 import { buildSessionStats } from './sessionStats';
 
 import { SearchableMultiSelect } from './components/SearchableMultiSelect';
+import { SectionNav } from './components/SectionNav';
 import {
   describeFixedExpenseCadence,
   describeMonthComparison,
@@ -1303,6 +1304,8 @@ export default function App() {
         </div>
       </header>
 
+      {activePage === 'auth' ? null : <SectionNav key={activePage} page={activePage} />}
+
       {statusMessage ? (
         <div className="flash flash--success">{statusMessage}</div>
       ) : null}
@@ -1491,7 +1494,7 @@ export default function App() {
         </section>
       ) : activePage === 'dashboard' ? (
         <>
-          <section className="hero-panel">
+          <section className="hero-panel section-anchor" id="dashboard-start" tabIndex={-1}>
             <div>
               <span className="eyebrow">Finance MVP</span>
               <h1>Leggi meglio i movimenti del conto.</h1>
@@ -1590,7 +1593,7 @@ export default function App() {
             </article>
 
             <section className="dashboard-ops-stack">
-              <article className="panel panel--accent dashboard-wide-panel">
+              <article className="panel panel--accent dashboard-wide-panel section-anchor" id="dashboard-import" tabIndex={-1}>
                 <div className="panel-heading">
                   <h2>Importa CSV banca</h2>
                   <p>
@@ -1645,7 +1648,7 @@ export default function App() {
               </article>
             </section>
 
-            <section className="insights-grid">
+            <section className="insights-grid section-anchor" id="dashboard-insights" tabIndex={-1}>
               <article className="panel insight-panel">
                 <div className="panel-heading">
                   <h2>Spesa per categoria</h2>
@@ -1892,7 +1895,7 @@ export default function App() {
                 )}
               </article>
 
-              <article className="panel insight-panel">
+              <article className="panel insight-panel section-anchor" id="dashboard-fixed" tabIndex={-1}>
                 <div className="panel-heading">
                   <h2>Spese fisse mensili</h2>
                   <p>
@@ -2033,7 +2036,7 @@ export default function App() {
               </article>
             </section>
 
-            <article className="panel liquidity-panel">
+            <article className="panel liquidity-panel section-anchor" id="dashboard-liquidity" tabIndex={-1}>
               <div className="panel-heading panel-heading--inline">
                 <div>
                   <h2>Confronto spesa selezionata e risparmio mensile</h2>
@@ -2403,7 +2406,7 @@ export default function App() {
               )}
             </article>
 
-            <article className="panel dashboard-wide-panel">
+            <article className="panel dashboard-wide-panel section-anchor" id="dashboard-correction" tabIndex={-1}>
               <div className="panel-heading">
                 <h2>Correzione manuale</h2>
                 <p>
@@ -2480,7 +2483,7 @@ export default function App() {
               </div>
             </article>
 
-            <article className="panel movements-panel">
+            <article className="panel movements-panel section-anchor" id="dashboard-movements" tabIndex={-1}>
               <div className="panel-heading panel-heading--inline movements-header">
                 <div>
                   <h2>Movimenti</h2>
@@ -2496,6 +2499,13 @@ export default function App() {
                     : '0'}{' '}
                   su {filteredTransactions.length} righe
                 </span>
+              </div>
+
+              <div className="movements-table-wrapper">
+                <span>Sum of selected transations ({selectedTransactionIds.length}): {selectedTransactionIds.length ? selectedTransactionIds.reduce((sum, id) => {
+                  const transaction = filteredTransactions.find(t => t.id === id);
+                  return transaction ? sum + transaction.amount : sum;
+                }, 0) : 0}</span>
               </div>
 
               <div className="filter-toolbar">
@@ -2607,15 +2617,17 @@ export default function App() {
                             }
                             key={transaction.id}
                           >
-                            <td>
+                            <td
+                              className="cell-select"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                toggleTransactionSelection(transaction.id);
+                              }}
+                            >
                               <input
                                 checked={selectedTransactionIds.includes(
                                   transaction.id,
                                 )}
-                                onChange={() =>
-                                  toggleTransactionSelection(transaction.id)
-                                }
-                                onClick={(event) => event.stopPropagation()}
                                 type="checkbox"
                               />
                             </td>
@@ -2734,7 +2746,7 @@ export default function App() {
         </>
       ) : (
         <>
-          <section className="hero-panel hero-panel--compact">
+          <section className="hero-panel hero-panel--compact section-anchor" id="rules-start" tabIndex={-1}>
             <div>
               <span className="eyebrow">Regole</span>
               <h1>Normalizza una volta, riusa sempre.</h1>
@@ -2755,7 +2767,7 @@ export default function App() {
           </section>
 
           <section className="rules-grid">
-            <article className="panel editor-panel">
+            <article className="panel editor-panel section-anchor" id="rules-editor" tabIndex={-1}>
               <div className="panel-heading">
                 <h2>Editor regole merchant</h2>
                 <p>
@@ -2884,7 +2896,7 @@ export default function App() {
               </form>
             </article>
 
-            <article className="panel rule-list-panel">
+            <article className="panel rule-list-panel section-anchor" id="rules-library" tabIndex={-1}>
               <div className="panel-heading panel-heading--inline">
                 <div>
                   <h2>Libreria regole</h2>

@@ -3,10 +3,81 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Personal Finance Tracker</title>
+    <title>Personal Finance Tracker | Dai movimenti bancari a spese chiare</title>
+    <meta name="description" content="Importa il CSV della tua banca, riconosci i merchant e capisci dove finiscono i tuoi soldi. Regole personalizzate e analisi delle spese, senza salvare lo storico." />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="it_IT" />
+    <meta property="og:title" content="Personal Finance Tracker | Dai movimenti bancari a spese chiare" />
+    <meta property="og:description" content="Dai CSV bancari a merchant puliti, categorie affidabili e insight di spesa. Lo storico resta nella sessione corrente." />
+    <meta name="theme-color" content="#f3f6f4" />
+    <link rel="stylesheet" href="/landing.css" />
+    <script>
+      if (/^#\/(dashboard|rules|auth(?:\/|$))/.test(location.hash)) {
+        location.replace('/app/' + location.hash);
+      }
+    </script>
   </head>
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <header class="site-header">
+      <div class="site-header__inner">
+        <a class="site-brand" href="/" aria-label="Personal Finance Tracker, pagina iniziale"><span class="site-brand__mark" aria-hidden="true">P.</span>Personal Finance Tracker</a>
+        <nav aria-label="Navigazione pagina">
+          <a class="site-header__link" href="#come-funziona">Come funziona</a>
+          <a class="site-header__app" href="/app/">Apri l'app</a>
+        </nav>
+      </div>
+    </header>
+    <main>
+      <section class="hero">
+        <div class="hero__inner">
+          <span class="hero__eyebrow">I numeri, finalmente leggibili</span>
+          <h1>Personal Finance Tracker</h1>
+          <p class="hero__lead">Dai movimenti bancari a spese chiare.</p>
+          <p class="hero__copy">Importa il CSV della tua banca, riconosci i merchant e scopri dove vanno i tuoi soldi. Una vista più chiara delle spese, senza creare un archivio dei tuoi movimenti.</p>
+          <a class="hero__action" href="/app/">Apri l'app <span aria-hidden="true">&rarr;</span></a>
+          <span class="hero__note">Nessuna registrazione necessaria per iniziare.</span>
+        </div>
+      </section>
+      <section class="features" id="come-funziona" aria-labelledby="features-title">
+        <div class="section-inner">
+          <span class="section-label">Dal file ai fatti</span>
+          <h2 id="features-title">I tuoi movimenti, senza il rumore.</h2>
+          <div class="feature-grid">
+            <div class="feature">
+              <span class="feature__number">01 / IMPORTA</span>
+              <h3>Parti dal CSV della banca</h3>
+              <p>Carica l'estratto conto in CSV. Il parser supporta gli export Mediolanum e file bancari con entrate e uscite separate.</p>
+            </div>
+            <div class="feature">
+              <span class="feature__number">02 / RICONOSCI</span>
+              <h3>Merchant e categorie più puliti</h3>
+              <p>Le regole deterministiche normalizzano le descrizioni e classificano le spese. Puoi correggerle e riusarle nei prossimi import.</p>
+            </div>
+            <div class="feature">
+              <span class="feature__number">03 / ANALIZZA</span>
+              <h3>Capisci quanto spendi</h3>
+              <p>Esplora categorie, merchant, spese ricorrenti e andamento mensile per avere una lettura più utile del tuo denaro.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="privacy" aria-labelledby="privacy-title">
+        <div class="section-inner privacy__grid">
+          <div>
+            <span class="section-label">Il controllo resta tuo</span>
+            <h2 id="privacy-title">Lo storico non ti segue.</h2>
+          </div>
+          <div class="privacy__copy">
+            <p>I movimenti importati rimangono nella sessione corrente e scompaiono al refresh. Puoi usare l'app senza account: le regole restano nel browser.</p>
+            <p>Con un account puoi sincronizzare solo le regole di classificazione tra dispositivi, mai lo storico delle transazioni.</p>
+            <a href="/app/">Vai alla dashboard <span aria-hidden="true">&rarr;</span></a>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="site-footer">
+      <span>Personal Finance Tracker</span>
+      <a href="/app/">Apri l'app</a>
+    </footer>
   </body>
 </html>
