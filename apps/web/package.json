@@ -13,6 +13,7 @@
     "@netlify/database": "^2.0.1",
     "@netlify/functions": "^6.0.0",
     "@types/node": "^22.20.2",
+    "lucide-react": "^1.48.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
   },

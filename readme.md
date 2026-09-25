@@ -49,6 +49,14 @@ npm run test:web
 
 Le stesse verifiche girano in CI (`.github/workflows/ci.yml`) su push e pull request.
 
+## Sito pubblico e indicizzazione
+
+La pagina pubblica e disponibile su `/`; l'applicazione e su `/app/` e non viene indicizzata. I vecchi link `/#/dashboard`, `/#/rules` e `/#/auth/...` vengono reindirizzati alla nuova posizione dell'app.
+
+Nel deploy Netlify di produzione la build usa la variabile `URL` del sito per generare canonical, immagine Open Graph, `robots.txt` e una sitemap con la sola homepage. Se usi un dominio personalizzato diverso dall'URL principale di Netlify, imposta `SITE_URL` con l'origine pubblica desiderata (per esempio `https://tuodominio.it`). Le deploy preview ricevono `noindex`; la sitemap viene generata solo in produzione.
+
+Dopo il deploy, verifica il dominio in Google Search Console e invia `/sitemap.xml`. Le pagine dell'app, incluse quelle di login, non vanno aggiunte alla sitemap.
+
 Project docs live under `docs/`. I contratti API effettivi sono in `docs/api-contracts.md`; le sezioni di specifica più sotto descrivono la visione iniziale del prodotto e non l'implementazione corrente.
 
 ## 🎯 Goal

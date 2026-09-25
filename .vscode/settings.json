@@ -1,3 +1,7 @@
 {
-  "eslint.options": {}
+  "eslint.options": {},
+  "chat.tools.terminal.autoApprove": {
+    "bun": true,
+    "git remote": true
+  }
 }
